@@ -1,7 +1,7 @@
 /*
 ** Copyright (c) 2018-2021 Valve Corporation
 ** Copyright (c) 2018-2021 LunarG, Inc.
-** Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,8 @@
 #include "generated/generated_vulkan_dispatch_table.h"
 #include "generated/generated_vulkan_command_buffer_util.h"
 #include "util/defines.h"
+#include "encode/vulkan_deferred_operation_create_ray_tracing_pipelines.h"
+#include "encode/vulkan_deferred_operation_manager.h"
 
 #include "vulkan/vulkan.h"
 
@@ -283,6 +285,10 @@ class VulkanCaptureManager : public CaptureManager
                                                   const VkRayTracingPipelineCreateInfoKHR* pCreateInfos,
                                                   const VkAllocationCallbacks*             pAllocator,
                                                   VkPipeline*                              pPipelines);
+
+    VkResult OverrideDeferredOperationJoinKHR(VkDevice device, VkDeferredOperationKHR operation);
+
+    VkResult OverrideGetDeferredOperationResultKHR(VkDevice device, VkDeferredOperationKHR operation);
 
     void PostProcess_vkEnumeratePhysicalDevices(VkResult          result,
                                                 VkInstance        instance,
@@ -905,6 +911,13 @@ class VulkanCaptureManager : public CaptureManager
     void OverrideGetPhysicalDeviceSurfacePresentModesKHR(uint32_t* pPresentModeCount, VkPresentModeKHR* pPresentModes);
 #endif
 
+    void WriteSetRayTracingShaderGroupHandlesCommand(format::HandleId device_id,
+                                                     format::HandleId pipeline_id,
+                                                     size_t           data_size,
+                                                     const void*      data);
+
+    std::unique_ptr<VulkanStateTracker>& GetStateTracker() { return state_tracker_; }
+
   protected:
     VulkanCaptureManager() : CaptureManager(format::ApiFamilyId::ApiFamily_Vulkan) {}
 
@@ -939,11 +952,6 @@ class VulkanCaptureManager : public CaptureManager
     void WriteSetDeviceMemoryPropertiesCommand(format::HandleId                        physical_device_id,
                                                const VkPhysicalDeviceMemoryProperties& memory_properties);
     void WriteSetOpaqueAddressCommand(format::HandleId device_id, format::HandleId object_id, uint64_t address);
-
-    void WriteSetRayTracingShaderGroupHandlesCommand(format::HandleId device_id,
-                                                     format::HandleId pipeline_id,
-                                                     size_t           data_size,
-                                                     const void*      data);
 
     void SetDescriptorUpdateTemplateInfo(VkDescriptorUpdateTemplate                  update_template,
                                          const VkDescriptorUpdateTemplateCreateInfo* create_info);

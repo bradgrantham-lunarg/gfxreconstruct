@@ -1,6 +1,7 @@
 /*
 ** Copyright (c) 2018-2020 Valve Corporation
 ** Copyright (c) 2018-2020 LunarG, Inc.
+** Copyright (c) 2019-2022 Advanced Micro Devices, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -21,14 +22,20 @@
 ** DEALINGS IN THE SOFTWARE.
 */
 
+#include "decode/vulkan_object_info.h"
 #include "decode/vulkan_decoder_base.h"
 
 #include "decode/descriptor_update_template_decoder.h"
 #include "decode/pointer_decoder.h"
 #include "decode/value_decoder.h"
+#include "decode/vulkan_deferred_operation_info_create_ray_tracing_pipelines.h"
+#include "decode/vulkan_deferred_operation_info_manager.h"
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(decode)
+
+std::shared_ptr<VulkanDeferredOperationInfoManager> VulkanDeferredOperationInfoManager::instance_ =
+    std::make_shared<VulkanDeferredOperationInfoManager>();
 
 void VulkanDecoderBase::DispatchStateBeginMarker(uint64_t frame_number)
 {
@@ -343,6 +350,67 @@ size_t VulkanDecoderBase::Decode_vkUpdateDescriptorSetWithTemplateKHR(const ApiC
     return bytes_read;
 }
 
+size_t VulkanDecoderBase::Decode_vkCreateRayTracingPipelinesKHR(const ApiCallInfo& call_info,
+                                                                const uint8_t*     parameter_buffer,
+                                                                size_t             buffer_size)
+{
+    size_t bytes_read = 0;
+
+    // The API call can be a deferred operation if the input parameter of
+    // VkDeferredOperationKHR is valid. So the following ref variables all
+    // have lifecycle beyond current API call, and the lifecycle must cover
+    // the range until deferred operation finished later when it might be in
+    // some other thread, these ref variables will be released at that time.
+    auto&& deferred_operation_info_instance = std::make_shared<VulkanDeferredOperationInfoCreateRayTracingPipelines>();
+    format::HandleId                                                 device            = format::kNullHandleId;
+    format::HandleId                                                 deferredOperation = format::kNullHandleId;
+    format::HandleId                                                 pipelineCache     = format::kNullHandleId;
+    uint32_t                                                         createInfoCount   = 0;
+    StructPointerDecoder<Decoded_VkRayTracingPipelineCreateInfoKHR>& pCreateInfos =
+        deferred_operation_info_instance->GetCreateInfos();
+    StructPointerDecoder<Decoded_VkAllocationCallbacks>& pAllocator = deferred_operation_info_instance->GetAllocator();
+    HandlePointerDecoder<VkPipeline>&                    pPipelines = deferred_operation_info_instance->GetPipelines();
+    VkResult                                             return_value;
+
+    bytes_read +=
+        ValueDecoder::DecodeHandleIdValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &device);
+    deferred_operation_info_instance->SetDeviceId(device);
+    bytes_read += ValueDecoder::DecodeHandleIdValue(
+        (parameter_buffer + bytes_read), (buffer_size - bytes_read), &deferredOperation);
+    deferred_operation_info_instance->SetDeferredOperationId(deferredOperation);
+    bytes_read +=
+        ValueDecoder::DecodeHandleIdValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &pipelineCache);
+    deferred_operation_info_instance->SetPipelineCacheId(pipelineCache);
+    bytes_read +=
+        ValueDecoder::DecodeUInt32Value((parameter_buffer + bytes_read), (buffer_size - bytes_read), &createInfoCount);
+    deferred_operation_info_instance->SetCreateInfoCount(createInfoCount);
+    bytes_read += pCreateInfos.Decode((parameter_buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += pAllocator.Decode((parameter_buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += pPipelines.Decode((parameter_buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read +=
+        ValueDecoder::DecodeEnumValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &return_value);
+
+    if (deferredOperation != gfxrecon::format::kNullHandleId)
+    {
+        VulkanDeferredOperationInfoManager::Get()->Add(deferredOperation, std::move(deferred_operation_info_instance));
+    }
+
+    for (auto consumer : GetConsumers())
+    {
+        consumer->Process_vkCreateRayTracingPipelinesKHR(call_info,
+                                                         return_value,
+                                                         device,
+                                                         deferredOperation,
+                                                         pipelineCache,
+                                                         createInfoCount,
+                                                         &pCreateInfos,
+                                                         &pAllocator,
+                                                         &pPipelines);
+    }
+
+    return bytes_read;
+}
+
 void VulkanDecoderBase::DecodeFunctionCall(format::ApiCallId  call_id,
                                            const ApiCallInfo& call_info,
                                            const uint8_t*     parameter_buffer,
@@ -360,6 +428,9 @@ void VulkanDecoderBase::DecodeFunctionCall(format::ApiCallId  call_id,
             break;
         case format::ApiCallId::ApiCall_vkUpdateDescriptorSetWithTemplateKHR:
             Decode_vkUpdateDescriptorSetWithTemplateKHR(call_info, parameter_buffer, buffer_size);
+            break;
+        case format::ApiCallId::ApiCall_vkCreateRayTracingPipelinesKHR:
+            Decode_vkCreateRayTracingPipelinesKHR(call_info, parameter_buffer, buffer_size);
             break;
         default:
             break;

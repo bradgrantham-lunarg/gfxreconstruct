@@ -1,6 +1,6 @@
 ###############################################################################
 # Copyright (c) 2018-2021 LunarG, Inc.
-# Copyright (c) 2019-2021 Advanced Micro Devices, Inc.
+# Copyright (c) 2019-2022 Advanced Micro Devices, Inc.
 # All rights reserved
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -48,6 +48,10 @@ target_sources(gfxrecon_encode
                     ${CMAKE_CURRENT_LIST_DIR}/parameter_buffer.h
                     ${CMAKE_CURRENT_LIST_DIR}/parameter_encoder.h
                     ${CMAKE_CURRENT_LIST_DIR}/struct_pointer_encoder.h
+                    ${CMAKE_CURRENT_LIST_DIR}/vulkan_deferred_operation.h
+                    ${CMAKE_CURRENT_LIST_DIR}/vulkan_deferred_operation_create_ray_tracing_pipelines.h
+                    ${CMAKE_CURRENT_LIST_DIR}/vulkan_deferred_operation_manager.h
+                    ${CMAKE_CURRENT_LIST_DIR}/vulkan_deferred_operation.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/vulkan_capture_manager.h
                     ${CMAKE_CURRENT_LIST_DIR}/vulkan_capture_manager.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/vulkan_handle_wrappers.h

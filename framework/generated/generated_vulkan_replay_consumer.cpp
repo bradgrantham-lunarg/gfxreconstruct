@@ -1,6 +1,7 @@
 /*
 ** Copyright (c) 2018-2021 Valve Corporation
 ** Copyright (c) 2018-2021 LunarG, Inc.
+** Copyright (c) 2019-2022 Advanced Micro Devices, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -4671,10 +4672,10 @@ void VulkanReplayConsumer::Process_vkGetDeferredOperationResultKHR(
     format::HandleId                            device,
     format::HandleId                            operation)
 {
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
-    VkDeferredOperationKHR in_operation = MapHandle<DeferredOperationKHRInfo>(operation, &VulkanObjectInfoTable::GetDeferredOperationKHRInfo);
+    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
+    auto in_operation = GetObjectInfoTable().GetDeferredOperationKHRInfo(operation);
 
-    VkResult replay_result = GetDeviceTable(in_device)->GetDeferredOperationResultKHR(in_device, in_operation);
+    VkResult replay_result = OverrideGetDeferredOperationResultKHR(GetDeviceTable(in_device->handle)->GetDeferredOperationResultKHR, returnValue, in_device, in_operation);
     CheckResult("vkGetDeferredOperationResultKHR", returnValue, replay_result);
 }
 
@@ -4684,10 +4685,10 @@ void VulkanReplayConsumer::Process_vkDeferredOperationJoinKHR(
     format::HandleId                            device,
     format::HandleId                            operation)
 {
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
-    VkDeferredOperationKHR in_operation = MapHandle<DeferredOperationKHRInfo>(operation, &VulkanObjectInfoTable::GetDeferredOperationKHRInfo);
+    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
+    auto in_operation = GetObjectInfoTable().GetDeferredOperationKHRInfo(operation);
 
-    VkResult replay_result = GetDeviceTable(in_device)->DeferredOperationJoinKHR(in_device, in_operation);
+    VkResult replay_result = OverrideDeferredOperationJoinKHR(GetDeviceTable(in_device->handle)->DeferredOperationJoinKHR, returnValue, in_device, in_operation);
     CheckResult("vkDeferredOperationJoinKHR", returnValue, replay_result);
 }
 
@@ -7530,32 +7531,6 @@ void VulkanReplayConsumer::Process_vkCmdTraceRaysKHR(
     const VkStridedDeviceAddressRegionKHR* in_pCallableShaderBindingTable = pCallableShaderBindingTable->GetPointer();
 
     GetDeviceTable(in_commandBuffer)->CmdTraceRaysKHR(in_commandBuffer, in_pRaygenShaderBindingTable, in_pMissShaderBindingTable, in_pHitShaderBindingTable, in_pCallableShaderBindingTable, width, height, depth);
-}
-
-void VulkanReplayConsumer::Process_vkCreateRayTracingPipelinesKHR(
-    const ApiCallInfo&                          call_info,
-    VkResult                                    returnValue,
-    format::HandleId                            device,
-    format::HandleId                            deferredOperation,
-    format::HandleId                            pipelineCache,
-    uint32_t                                    createInfoCount,
-    StructPointerDecoder<Decoded_VkRayTracingPipelineCreateInfoKHR>* pCreateInfos,
-    StructPointerDecoder<Decoded_VkAllocationCallbacks>* pAllocator,
-    HandlePointerDecoder<VkPipeline>*           pPipelines)
-{
-    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
-    auto in_deferredOperation = GetObjectInfoTable().GetDeferredOperationKHRInfo(deferredOperation);
-    auto in_pipelineCache = GetObjectInfoTable().GetPipelineCacheInfo(pipelineCache);
-
-    MapStructArrayHandles(pCreateInfos->GetMetaStructPointer(), pCreateInfos->GetLength(), GetObjectInfoTable());
-    if (!pPipelines->IsNull()) { pPipelines->SetHandleLength(createInfoCount); }
-    std::vector<PipelineInfo> handle_info(createInfoCount);
-    for (size_t i = 0; i < createInfoCount; ++i) { pPipelines->SetConsumerData(i, &handle_info[i]); }
-
-    VkResult replay_result = OverrideCreateRayTracingPipelinesKHR(GetDeviceTable(in_device->handle)->CreateRayTracingPipelinesKHR, returnValue, in_device, in_deferredOperation, in_pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
-    CheckResult("vkCreateRayTracingPipelinesKHR", returnValue, replay_result);
-
-    AddHandles<PipelineInfo>(device, pPipelines->GetPointer(), pPipelines->GetLength(), pPipelines->GetHandlePointer(), createInfoCount, std::move(handle_info), &VulkanObjectInfoTable::AddPipelineInfo);
 }
 
 void VulkanReplayConsumer::Process_vkGetRayTracingCaptureReplayShaderGroupHandlesKHR(

@@ -1,6 +1,7 @@
 /*
 ** Copyright (c) 2018-2021 Valve Corporation
 ** Copyright (c) 2018-2021 LunarG, Inc.
+** Copyright (c) 2019-2022 Advanced Micro Devices, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -9537,10 +9538,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetDeferredOperationResultKHR(
 
     CustomEncoderPreCall<format::ApiCallId::ApiCall_vkGetDeferredOperationResultKHR>::Dispatch(VulkanCaptureManager::Get(), device, operation);
 
-    VkDevice device_unwrapped = GetWrappedHandle<VkDevice>(device);
-    VkDeferredOperationKHR operation_unwrapped = GetWrappedHandle<VkDeferredOperationKHR>(operation);
-
-    VkResult result = GetDeviceTable(device)->GetDeferredOperationResultKHR(device_unwrapped, operation_unwrapped);
+    VkResult result = VulkanCaptureManager::Get()->OverrideGetDeferredOperationResultKHR(device, operation);
 
     auto encoder = VulkanCaptureManager::Get()->BeginApiCallCapture(format::ApiCallId::ApiCall_vkGetDeferredOperationResultKHR);
     if (encoder)
@@ -9564,10 +9562,7 @@ VKAPI_ATTR VkResult VKAPI_CALL DeferredOperationJoinKHR(
 
     CustomEncoderPreCall<format::ApiCallId::ApiCall_vkDeferredOperationJoinKHR>::Dispatch(VulkanCaptureManager::Get(), device, operation);
 
-    VkDevice device_unwrapped = GetWrappedHandle<VkDevice>(device);
-    VkDeferredOperationKHR operation_unwrapped = GetWrappedHandle<VkDeferredOperationKHR>(operation);
-
-    VkResult result = GetDeviceTable(device)->DeferredOperationJoinKHR(device_unwrapped, operation_unwrapped);
+    VkResult result = VulkanCaptureManager::Get()->OverrideDeferredOperationJoinKHR(device, operation);
 
     auto encoder = VulkanCaptureManager::Get()->BeginApiCallCapture(format::ApiCallId::ApiCall_vkDeferredOperationJoinKHR);
     if (encoder)
@@ -15453,46 +15448,6 @@ VKAPI_ATTR void VKAPI_CALL CmdTraceRaysKHR(
     GetDeviceTable(commandBuffer)->CmdTraceRaysKHR(commandBuffer_unwrapped, pRaygenShaderBindingTable, pMissShaderBindingTable, pHitShaderBindingTable, pCallableShaderBindingTable, width, height, depth);
 
     CustomEncoderPostCall<format::ApiCallId::ApiCall_vkCmdTraceRaysKHR>::Dispatch(VulkanCaptureManager::Get(), commandBuffer, pRaygenShaderBindingTable, pMissShaderBindingTable, pHitShaderBindingTable, pCallableShaderBindingTable, width, height, depth);
-}
-
-VKAPI_ATTR VkResult VKAPI_CALL CreateRayTracingPipelinesKHR(
-    VkDevice                                    device,
-    VkDeferredOperationKHR                      deferredOperation,
-    VkPipelineCache                             pipelineCache,
-    uint32_t                                    createInfoCount,
-    const VkRayTracingPipelineCreateInfoKHR*    pCreateInfos,
-    const VkAllocationCallbacks*                pAllocator,
-    VkPipeline*                                 pPipelines)
-{
-    auto state_lock = VulkanCaptureManager::Get()->AcquireSharedStateLock();
-
-    bool omit_output_data = false;
-
-    CustomEncoderPreCall<format::ApiCallId::ApiCall_vkCreateRayTracingPipelinesKHR>::Dispatch(VulkanCaptureManager::Get(), device, deferredOperation, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
-
-    VkResult result = VulkanCaptureManager::Get()->OverrideCreateRayTracingPipelinesKHR(device, deferredOperation, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
-    if (result < 0)
-    {
-        omit_output_data = true;
-    }
-
-    auto encoder = VulkanCaptureManager::Get()->BeginTrackedApiCallCapture(format::ApiCallId::ApiCall_vkCreateRayTracingPipelinesKHR);
-    if (encoder)
-    {
-        encoder->EncodeHandleValue(device);
-        encoder->EncodeHandleValue(deferredOperation);
-        encoder->EncodeHandleValue(pipelineCache);
-        encoder->EncodeUInt32Value(createInfoCount);
-        EncodeStructArray(encoder, pCreateInfos, createInfoCount);
-        EncodeStructPtr(encoder, pAllocator);
-        encoder->EncodeHandleArray(pPipelines, createInfoCount, omit_output_data);
-        encoder->EncodeEnumValue(result);
-        VulkanCaptureManager::Get()->EndGroupCreateApiCallCapture<VkDevice, VkDeferredOperationKHR, PipelineWrapper, VkRayTracingPipelineCreateInfoKHR>(result, device, deferredOperation, createInfoCount, pPipelines, pCreateInfos);
-    }
-
-    CustomEncoderPostCall<format::ApiCallId::ApiCall_vkCreateRayTracingPipelinesKHR>::Dispatch(VulkanCaptureManager::Get(), result, device, deferredOperation, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
-
-    return result;
 }
 
 VKAPI_ATTR VkResult VKAPI_CALL GetRayTracingCaptureReplayShaderGroupHandlesKHR(

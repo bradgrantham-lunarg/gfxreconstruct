@@ -1,6 +1,7 @@
 /*
 ** Copyright (c) 2018-2021 Valve Corporation
 ** Copyright (c) 2018-2021 LunarG, Inc.
+** Copyright (c) 2019-2022 Advanced Micro Devices, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -1049,8 +1050,6 @@ class VulkanDecoder : public VulkanDecoderBase
     size_t Decode_vkGetAccelerationStructureBuildSizesKHR(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size);
 
     size_t Decode_vkCmdTraceRaysKHR(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size);
-
-    size_t Decode_vkCreateRayTracingPipelinesKHR(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size);
 
     size_t Decode_vkGetRayTracingCaptureReplayShaderGroupHandlesKHR(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size);
 

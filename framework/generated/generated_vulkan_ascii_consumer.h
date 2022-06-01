@@ -3344,13 +3344,6 @@ class VulkanAsciiConsumer : public VulkanAsciiConsumerBase
         StructPointerDecoder<Decoded_VkMemoryGetRemoteAddressInfoNV>* pMemoryGetRemoteAddressInfo,
         PointerDecoder<uint64_t, void*>*            pAddress) override;
 
-    virtual void Process_vkGetPipelinePropertiesEXT(
-        const ApiCallInfo&                          call_info,
-        VkResult                                    returnValue,
-        format::HandleId                            device,
-        StructPointerDecoder<Decoded_VkPipelineInfoEXT>* pPipelineInfo,
-        StructPointerDecoder<Decoded_VkBaseOutStructure>* pPipelineProperties) override;
-
     virtual void Process_vkCmdSetPatchControlPointsEXT(
         const ApiCallInfo&                          call_info,
         format::HandleId                            commandBuffer,

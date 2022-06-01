@@ -2647,11 +2647,6 @@ VKAPI_ATTR VkResult VKAPI_CALL GetMemoryRemoteAddressNV(
     const VkMemoryGetRemoteAddressInfoNV*       pMemoryGetRemoteAddressInfo,
     VkRemoteAddressNV*                          pAddress);
 
-VKAPI_ATTR VkResult VKAPI_CALL GetPipelinePropertiesEXT(
-    VkDevice                                    device,
-    const VkPipelineInfoEXT*                    pPipelineInfo,
-    VkBaseOutStructure*                         pPipelineProperties);
-
 VKAPI_ATTR void VKAPI_CALL CmdSetPatchControlPointsEXT(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    patchControlPoints);

@@ -10400,28 +10400,6 @@ void VulkanAsciiConsumer::Process_vkGetMemoryRemoteAddressNV(
     );
 }
 
-void VulkanAsciiConsumer::Process_vkGetPipelinePropertiesEXT(
-    const ApiCallInfo&                          call_info,
-    VkResult                                    returnValue,
-    format::HandleId                            device,
-    StructPointerDecoder<Decoded_VkPipelineInfoEXT>* pPipelineInfo,
-    StructPointerDecoder<Decoded_VkBaseOutStructure>* pPipelineProperties)
-{
-    using namespace gfxrecon::util;
-    ToStringFlags toStringFlags = kToString_Default;
-    uint32_t tabCount = 0;
-    uint32_t tabSize = 4;
-    WriteApiCallToFile(call_info, "vkGetPipelinePropertiesEXT", toStringFlags, tabCount, tabSize,
-        [&](std::stringstream& strStrm)
-        {
-            FieldToString(strStrm, true, "return", toStringFlags, tabCount, tabSize, '"' + ToString(returnValue, toStringFlags, tabCount, tabSize) + '"');
-            FieldToString(strStrm, false, "device", toStringFlags, tabCount, tabSize, HandleIdToString(device));
-            FieldToString(strStrm, false, "pPipelineInfo", toStringFlags, tabCount, tabSize, PointerDecoderToString(pPipelineInfo, toStringFlags, tabCount, tabSize));
-            FieldToString(strStrm, false, "[out]pPipelineProperties", toStringFlags, tabCount, tabSize, PointerDecoderToString(pPipelineProperties, toStringFlags, tabCount, tabSize));
-        }
-    );
-}
-
 void VulkanAsciiConsumer::Process_vkCmdSetPatchControlPointsEXT(
     const ApiCallInfo&                          call_info,
     format::HandleId                            commandBuffer,

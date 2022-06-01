@@ -2268,19 +2268,6 @@ void RemoveUnsupportedFeatures(VkPhysicalDevice physicalDevice, PFN_vkGetPhysica
                 }
                 break;
              }
-            case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT:
-            {
-                const VkPhysicalDevicePipelinePropertiesFeaturesEXT* currentNext = reinterpret_cast<const VkPhysicalDevicePipelinePropertiesFeaturesEXT*>(next);
-                VkPhysicalDevicePipelinePropertiesFeaturesEXT query = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT, nullptr };
-                physicalDeviceFeatures2.pNext = &query;
-                GetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures2);
-                if ((currentNext->pipelinePropertiesIdentifier == VK_TRUE) && (query.pipelinePropertiesIdentifier == VK_FALSE))
-                {
-                    GFXRECON_LOG_WARNING("Feature pipelinePropertiesIdentifier, which is not supported by the replay device, will not be enabled");
-                    const_cast<VkPhysicalDevicePipelinePropertiesFeaturesEXT*>(currentNext)->pipelinePropertiesIdentifier = VK_FALSE;
-                }
-                break;
-             }
             case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT:
             {
                 const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT* currentNext = reinterpret_cast<const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT*>(next);

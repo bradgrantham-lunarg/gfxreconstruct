@@ -10452,28 +10452,6 @@ size_t VulkanDecoder::Decode_vkGetMemoryRemoteAddressNV(const ApiCallInfo& call_
     return bytes_read;
 }
 
-size_t VulkanDecoder::Decode_vkGetPipelinePropertiesEXT(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size)
-{
-    size_t bytes_read = 0;
-
-    format::HandleId device;
-    StructPointerDecoder<Decoded_VkPipelineInfoEXT> pPipelineInfo;
-    StructPointerDecoder<Decoded_VkBaseOutStructure> pPipelineProperties;
-    VkResult return_value;
-
-    bytes_read += ValueDecoder::DecodeHandleIdValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &device);
-    bytes_read += pPipelineInfo.Decode((parameter_buffer + bytes_read), (buffer_size - bytes_read));
-    bytes_read += pPipelineProperties.Decode((parameter_buffer + bytes_read), (buffer_size - bytes_read));
-    bytes_read += ValueDecoder::DecodeEnumValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &return_value);
-
-    for (auto consumer : GetConsumers())
-    {
-        consumer->Process_vkGetPipelinePropertiesEXT(call_info, return_value, device, &pPipelineInfo, &pPipelineProperties);
-    }
-
-    return bytes_read;
-}
-
 size_t VulkanDecoder::Decode_vkCmdSetPatchControlPointsEXT(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size)
 {
     size_t bytes_read = 0;
@@ -12647,9 +12625,6 @@ void VulkanDecoder::DecodeFunctionCall(format::ApiCallId             call_id,
         break;
     case format::ApiCallId::ApiCall_vkGetMemoryRemoteAddressNV:
         Decode_vkGetMemoryRemoteAddressNV(call_info, parameter_buffer, buffer_size);
-        break;
-    case format::ApiCallId::ApiCall_vkGetPipelinePropertiesEXT:
-        Decode_vkGetPipelinePropertiesEXT(call_info, parameter_buffer, buffer_size);
         break;
     case format::ApiCallId::ApiCall_vkCmdSetPatchControlPointsEXT:
         Decode_vkCmdSetPatchControlPointsEXT(call_info, parameter_buffer, buffer_size);

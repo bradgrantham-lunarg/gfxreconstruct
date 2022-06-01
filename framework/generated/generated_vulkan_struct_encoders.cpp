@@ -6012,20 +6012,6 @@ void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceExternalMemor
     encoder->EncodeVkBool32Value(value.externalMemoryRDMA);
 }
 
-void EncodeStruct(ParameterEncoder* encoder, const VkPipelinePropertiesIdentifierEXT& value)
-{
-    encoder->EncodeEnumValue(value.sType);
-    EncodePNextStruct(encoder, value.pNext);
-    encoder->EncodeUInt8Array(value.pipelineIdentifier, VK_UUID_SIZE);
-}
-
-void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDevicePipelinePropertiesFeaturesEXT& value)
-{
-    encoder->EncodeEnumValue(value.sType);
-    EncodePNextStruct(encoder, value.pNext);
-    encoder->EncodeVkBool32Value(value.pipelinePropertiesIdentifier);
-}
-
 void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT& value)
 {
     encoder->EncodeEnumValue(value.sType);

@@ -664,8 +664,6 @@ template <> std::string ToString<VkSemaphoreGetZirconHandleInfoFUCHSIA>(const Vk
 template <> std::string ToString<VkPhysicalDeviceInvocationMaskFeaturesHUAWEI>(const VkPhysicalDeviceInvocationMaskFeaturesHUAWEI& obj, ToStringFlags toStriingFlags, uint32_t tabCount, uint32_t tabSize);
 template <> std::string ToString<VkMemoryGetRemoteAddressInfoNV>(const VkMemoryGetRemoteAddressInfoNV& obj, ToStringFlags toStriingFlags, uint32_t tabCount, uint32_t tabSize);
 template <> std::string ToString<VkPhysicalDeviceExternalMemoryRDMAFeaturesNV>(const VkPhysicalDeviceExternalMemoryRDMAFeaturesNV& obj, ToStringFlags toStriingFlags, uint32_t tabCount, uint32_t tabSize);
-template <> std::string ToString<VkPipelinePropertiesIdentifierEXT>(const VkPipelinePropertiesIdentifierEXT& obj, ToStringFlags toStriingFlags, uint32_t tabCount, uint32_t tabSize);
-template <> std::string ToString<VkPhysicalDevicePipelinePropertiesFeaturesEXT>(const VkPhysicalDevicePipelinePropertiesFeaturesEXT& obj, ToStringFlags toStriingFlags, uint32_t tabCount, uint32_t tabSize);
 template <> std::string ToString<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>(const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT& obj, ToStringFlags toStriingFlags, uint32_t tabCount, uint32_t tabSize);
 template <> std::string ToString<VkScreenSurfaceCreateInfoQNX>(const VkScreenSurfaceCreateInfoQNX& obj, ToStringFlags toStriingFlags, uint32_t tabCount, uint32_t tabSize);
 template <> std::string ToString<VkPhysicalDeviceColorWriteEnableFeaturesEXT>(const VkPhysicalDeviceColorWriteEnableFeaturesEXT& obj, ToStringFlags toStriingFlags, uint32_t tabCount, uint32_t tabSize);

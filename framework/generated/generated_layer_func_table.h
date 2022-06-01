@@ -526,7 +526,6 @@ const std::unordered_map<std::string, PFN_vkVoidFunction> func_table = {
     { "vkGetSemaphoreZirconHandleFUCHSIA",                                                                   reinterpret_cast<PFN_vkVoidFunction>(encode::GetSemaphoreZirconHandleFUCHSIA) },
     { "vkCmdBindInvocationMaskHUAWEI",                                                                       reinterpret_cast<PFN_vkVoidFunction>(encode::CmdBindInvocationMaskHUAWEI) },
     { "vkGetMemoryRemoteAddressNV",                                                                          reinterpret_cast<PFN_vkVoidFunction>(encode::GetMemoryRemoteAddressNV) },
-    { "vkGetPipelinePropertiesEXT",                                                                          reinterpret_cast<PFN_vkVoidFunction>(encode::GetPipelinePropertiesEXT) },
     { "vkCmdSetPatchControlPointsEXT",                                                                       reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetPatchControlPointsEXT) },
     { "vkCmdSetRasterizerDiscardEnableEXT",                                                                  reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetRasterizerDiscardEnableEXT) },
     { "vkCmdSetDepthBiasEnableEXT",                                                                          reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetDepthBiasEnableEXT) },

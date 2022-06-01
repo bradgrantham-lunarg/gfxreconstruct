@@ -14749,40 +14749,6 @@ VKAPI_ATTR VkResult VKAPI_CALL GetMemoryRemoteAddressNV(
     return result;
 }
 
-VKAPI_ATTR VkResult VKAPI_CALL GetPipelinePropertiesEXT(
-    VkDevice                                    device,
-    const VkPipelineInfoEXT*                    pPipelineInfo,
-    VkBaseOutStructure*                         pPipelineProperties)
-{
-    auto state_lock = VulkanCaptureManager::Get()->AcquireSharedStateLock();
-
-    bool omit_output_data = false;
-
-    CustomEncoderPreCall<format::ApiCallId::ApiCall_vkGetPipelinePropertiesEXT>::Dispatch(VulkanCaptureManager::Get(), device, pPipelineInfo, pPipelineProperties);
-
-    VkDevice device_unwrapped = GetWrappedHandle<VkDevice>(device);
-
-    VkResult result = GetDeviceTable(device)->GetPipelinePropertiesEXT(device_unwrapped, pPipelineInfo, pPipelineProperties);
-    if (result < 0)
-    {
-        omit_output_data = true;
-    }
-
-    auto encoder = VulkanCaptureManager::Get()->BeginApiCallCapture(format::ApiCallId::ApiCall_vkGetPipelinePropertiesEXT);
-    if (encoder)
-    {
-        encoder->EncodeHandleValue(device);
-        EncodeStructPtr(encoder, pPipelineInfo);
-        EncodeStructPtr(encoder, pPipelineProperties, omit_output_data);
-        encoder->EncodeEnumValue(result);
-        VulkanCaptureManager::Get()->EndApiCallCapture();
-    }
-
-    CustomEncoderPostCall<format::ApiCallId::ApiCall_vkGetPipelinePropertiesEXT>::Dispatch(VulkanCaptureManager::Get(), result, device, pPipelineInfo, pPipelineProperties);
-
-    return result;
-}
-
 VKAPI_ATTR void VKAPI_CALL CmdSetPatchControlPointsEXT(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    patchControlPoints)

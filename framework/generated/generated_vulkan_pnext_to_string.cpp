@@ -672,10 +672,6 @@ std::string PNextToString(const void* pNext, ToStringFlags toStringFlags, uint32
             return ToString(*reinterpret_cast<const VkPhysicalDeviceInvocationMaskFeaturesHUAWEI*>(pNext), toStringFlags, tabCount, tabSize);
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_RDMA_FEATURES_NV:
             return ToString(*reinterpret_cast<const VkPhysicalDeviceExternalMemoryRDMAFeaturesNV*>(pNext), toStringFlags, tabCount, tabSize);
-        case VK_STRUCTURE_TYPE_PIPELINE_PROPERTIES_IDENTIFIER_EXT:
-            return ToString(*reinterpret_cast<const VkPipelinePropertiesIdentifierEXT*>(pNext), toStringFlags, tabCount, tabSize);
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT:
-            return ToString(*reinterpret_cast<const VkPhysicalDevicePipelinePropertiesFeaturesEXT*>(pNext), toStringFlags, tabCount, tabSize);
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT:
             return ToString(*reinterpret_cast<const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT*>(pNext), toStringFlags, tabCount, tabSize);
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT:

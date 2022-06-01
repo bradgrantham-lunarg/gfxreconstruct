@@ -1602,12 +1602,6 @@ struct Decoded_VkPhysicalDeviceExternalMemoryRDMAFeaturesNV;
 size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkMemoryGetRemoteAddressInfoNV* wrapper);
 size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkPhysicalDeviceExternalMemoryRDMAFeaturesNV* wrapper);
 
-struct Decoded_VkPipelinePropertiesIdentifierEXT;
-struct Decoded_VkPhysicalDevicePipelinePropertiesFeaturesEXT;
-
-size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkPipelinePropertiesIdentifierEXT* wrapper);
-size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkPhysicalDevicePipelinePropertiesFeaturesEXT* wrapper);
-
 struct Decoded_VkPhysicalDeviceExtendedDynamicState2FeaturesEXT;
 
 size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkPhysicalDeviceExtendedDynamicState2FeaturesEXT* wrapper);

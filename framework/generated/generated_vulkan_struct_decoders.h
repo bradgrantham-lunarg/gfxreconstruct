@@ -6461,27 +6461,6 @@ struct Decoded_VkPhysicalDeviceExternalMemoryRDMAFeaturesNV
     PNextNode* pNext{ nullptr };
 };
 
-struct Decoded_VkPipelinePropertiesIdentifierEXT
-{
-    using struct_type = VkPipelinePropertiesIdentifierEXT;
-
-    VkPipelinePropertiesIdentifierEXT* decoded_value{ nullptr };
-
-    PNextNode* pNext{ nullptr };
-    PointerDecoder<uint8_t> pipelineIdentifier;
-};
-
-struct Decoded_VkPhysicalDevicePipelinePropertiesFeaturesEXT
-{
-    using struct_type = VkPhysicalDevicePipelinePropertiesFeaturesEXT;
-
-    VkPhysicalDevicePipelinePropertiesFeaturesEXT* decoded_value{ nullptr };
-
-    PNextNode* pNext{ nullptr };
-};
-
-typedef Decoded_VkPipelineInfoKHR Decoded_VkPipelineInfoEXT;
-
 struct Decoded_VkPhysicalDeviceExtendedDynamicState2FeaturesEXT
 {
     using struct_type = VkPhysicalDeviceExtendedDynamicState2FeaturesEXT;

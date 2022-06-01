@@ -9086,30 +9086,6 @@ template <> std::string ToString<VkPhysicalDeviceExternalMemoryRDMAFeaturesNV>(c
     );
 }
 
-template <> std::string ToString<VkPipelinePropertiesIdentifierEXT>(const VkPipelinePropertiesIdentifierEXT& obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
-{
-    return ObjectToString(toStringFlags, tabCount, tabSize,
-        [&](std::stringstream& strStrm)
-        {
-            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, '"' + ToString(obj.sType, toStringFlags, tabCount, tabSize) + '"');
-            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextToString(obj.pNext, toStringFlags, tabCount, tabSize));
-            FieldToString(strStrm, false, "pipelineIdentifier", toStringFlags, tabCount, tabSize, '"' + UIDToString(VK_UUID_SIZE, obj.pipelineIdentifier) + '"');
-        }
-    );
-}
-
-template <> std::string ToString<VkPhysicalDevicePipelinePropertiesFeaturesEXT>(const VkPhysicalDevicePipelinePropertiesFeaturesEXT& obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
-{
-    return ObjectToString(toStringFlags, tabCount, tabSize,
-        [&](std::stringstream& strStrm)
-        {
-            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, '"' + ToString(obj.sType, toStringFlags, tabCount, tabSize) + '"');
-            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextToString(obj.pNext, toStringFlags, tabCount, tabSize));
-            FieldToString(strStrm, false, "pipelinePropertiesIdentifier", toStringFlags, tabCount, tabSize, ToString(obj.pipelinePropertiesIdentifier, toStringFlags, tabCount, tabSize));
-        }
-    );
-}
-
 template <> std::string ToString<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>(const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT& obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
 {
     return ObjectToString(toStringFlags, tabCount, tabSize,

@@ -7183,21 +7183,6 @@ void VulkanReplayConsumer::Process_vkGetMemoryRemoteAddressNV(
     PostProcessExternalObject(replay_result, (*pAddress->GetPointer()), static_cast<void*>(*out_pAddress), format::ApiCallId::ApiCall_vkGetMemoryRemoteAddressNV, "vkGetMemoryRemoteAddressNV");
 }
 
-void VulkanReplayConsumer::Process_vkGetPipelinePropertiesEXT(
-    const ApiCallInfo&                          call_info,
-    VkResult                                    returnValue,
-    format::HandleId                            device,
-    StructPointerDecoder<Decoded_VkPipelineInfoEXT>* pPipelineInfo,
-    StructPointerDecoder<Decoded_VkBaseOutStructure>* pPipelineProperties)
-{
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
-    const VkPipelineInfoEXT* in_pPipelineInfo = pPipelineInfo->GetPointer();
-    VkBaseOutStructure* out_pPipelineProperties = pPipelineProperties->IsNull() ? nullptr : pPipelineProperties->AllocateOutputData(1, { VK_STRUCTURE_TYPE_BASE_OUT_STRUCTURE, nullptr });
-
-    VkResult replay_result = GetDeviceTable(in_device)->GetPipelinePropertiesEXT(in_device, in_pPipelineInfo, out_pPipelineProperties);
-    CheckResult("vkGetPipelinePropertiesEXT", returnValue, replay_result);
-}
-
 void VulkanReplayConsumer::Process_vkCmdSetPatchControlPointsEXT(
     const ApiCallInfo&                          call_info,
     format::HandleId                            commandBuffer,

@@ -824,9 +824,6 @@ void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceInvocationMas
 void EncodeStruct(ParameterEncoder* encoder, const VkMemoryGetRemoteAddressInfoNV& value);
 void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceExternalMemoryRDMAFeaturesNV& value);
 
-void EncodeStruct(ParameterEncoder* encoder, const VkPipelinePropertiesIdentifierEXT& value);
-void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDevicePipelinePropertiesFeaturesEXT& value);
-
 void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT& value);
 
 void EncodeStruct(ParameterEncoder* encoder, const VkScreenSurfaceCreateInfoQNX& value);

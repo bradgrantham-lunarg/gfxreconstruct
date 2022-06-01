@@ -1815,6 +1815,10 @@ VKAPI_ATTR void VKAPI_CALL CmdResolveImage2KHR(
     VkCommandBuffer                             commandBuffer,
     const VkResolveImageInfo2*                  pResolveImageInfo);
 
+VKAPI_ATTR void VKAPI_CALL CmdTraceRaysIndirect2KHR(
+    VkCommandBuffer                             commandBuffer,
+    VkDeviceAddress                             indirectDeviceAddress);
+
 VKAPI_ATTR void VKAPI_CALL GetDeviceBufferMemoryRequirementsKHR(
     VkDevice                                    device,
     const VkDeviceBufferMemoryRequirements*     pInfo,
@@ -2580,6 +2584,12 @@ VKAPI_ATTR void VKAPI_CALL CmdSetFragmentShadingRateEnumNV(
     VkFragmentShadingRateNV                     shadingRate,
     const VkFragmentShadingRateCombinerOpKHR    combinerOps[2]);
 
+VKAPI_ATTR void VKAPI_CALL GetImageSubresourceLayout2EXT(
+    VkDevice                                    device,
+    VkImage                                     image,
+    const VkImageSubresource2EXT*               pSubresource,
+    VkSubresourceLayout2EXT*                    pLayout);
+
 VKAPI_ATTR VkResult VKAPI_CALL AcquireWinrtDisplayNV(
     VkPhysicalDevice                            physicalDevice,
     VkDisplayKHR                                display);
@@ -2636,6 +2646,11 @@ VKAPI_ATTR VkResult VKAPI_CALL GetMemoryRemoteAddressNV(
     VkDevice                                    device,
     const VkMemoryGetRemoteAddressInfoNV*       pMemoryGetRemoteAddressInfo,
     VkRemoteAddressNV*                          pAddress);
+
+VKAPI_ATTR VkResult VKAPI_CALL GetPipelinePropertiesEXT(
+    VkDevice                                    device,
+    const VkPipelineInfoEXT*                    pPipelineInfo,
+    VkBaseOutStructure*                         pPipelineProperties);
 
 VKAPI_ATTR void VKAPI_CALL CmdSetPatchControlPointsEXT(
     VkCommandBuffer                             commandBuffer,

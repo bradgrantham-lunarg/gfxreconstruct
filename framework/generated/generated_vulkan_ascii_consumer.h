@@ -2288,6 +2288,11 @@ class VulkanAsciiConsumer : public VulkanAsciiConsumerBase
         format::HandleId                            commandBuffer,
         StructPointerDecoder<Decoded_VkResolveImageInfo2>* pResolveImageInfo) override;
 
+    virtual void Process_vkCmdTraceRaysIndirect2KHR(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        VkDeviceAddress                             indirectDeviceAddress) override;
+
     virtual void Process_vkGetDeviceBufferMemoryRequirementsKHR(
         const ApiCallInfo&                          call_info,
         format::HandleId                            device,
@@ -3255,6 +3260,13 @@ class VulkanAsciiConsumer : public VulkanAsciiConsumerBase
         VkFragmentShadingRateNV                     shadingRate,
         PointerDecoder<VkFragmentShadingRateCombinerOpKHR>* combinerOps) override;
 
+    virtual void Process_vkGetImageSubresourceLayout2EXT(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            device,
+        format::HandleId                            image,
+        StructPointerDecoder<Decoded_VkImageSubresource2EXT>* pSubresource,
+        StructPointerDecoder<Decoded_VkSubresourceLayout2EXT>* pLayout) override;
+
     virtual void Process_vkAcquireWinrtDisplayNV(
         const ApiCallInfo&                          call_info,
         VkResult                                    returnValue,
@@ -3331,6 +3343,13 @@ class VulkanAsciiConsumer : public VulkanAsciiConsumerBase
         format::HandleId                            device,
         StructPointerDecoder<Decoded_VkMemoryGetRemoteAddressInfoNV>* pMemoryGetRemoteAddressInfo,
         PointerDecoder<uint64_t, void*>*            pAddress) override;
+
+    virtual void Process_vkGetPipelinePropertiesEXT(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        StructPointerDecoder<Decoded_VkPipelineInfoEXT>* pPipelineInfo,
+        StructPointerDecoder<Decoded_VkBaseOutStructure>* pPipelineProperties) override;
 
     virtual void Process_vkCmdSetPatchControlPointsEXT(
         const ApiCallInfo&                          call_info,

@@ -7088,6 +7088,24 @@ void VulkanAsciiConsumer::Process_vkCmdResolveImage2KHR(
     );
 }
 
+void VulkanAsciiConsumer::Process_vkCmdTraceRaysIndirect2KHR(
+    const ApiCallInfo&                          call_info,
+    format::HandleId                            commandBuffer,
+    VkDeviceAddress                             indirectDeviceAddress)
+{
+    using namespace gfxrecon::util;
+    ToStringFlags toStringFlags = kToString_Default;
+    uint32_t tabCount = 0;
+    uint32_t tabSize = 4;
+    WriteApiCallToFile(call_info, "vkCmdTraceRaysIndirect2KHR", toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "commandBuffer", toStringFlags, tabCount, tabSize, HandleIdToString(commandBuffer));
+            FieldToString(strStrm, false, "indirectDeviceAddress", toStringFlags, tabCount, tabSize, ToString(indirectDeviceAddress, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
 void VulkanAsciiConsumer::Process_vkGetDeviceBufferMemoryRequirementsKHR(
     const ApiCallInfo&                          call_info,
     format::HandleId                            device,
@@ -10118,6 +10136,28 @@ void VulkanAsciiConsumer::Process_vkCmdSetFragmentShadingRateEnumNV(
     );
 }
 
+void VulkanAsciiConsumer::Process_vkGetImageSubresourceLayout2EXT(
+    const ApiCallInfo&                          call_info,
+    format::HandleId                            device,
+    format::HandleId                            image,
+    StructPointerDecoder<Decoded_VkImageSubresource2EXT>* pSubresource,
+    StructPointerDecoder<Decoded_VkSubresourceLayout2EXT>* pLayout)
+{
+    using namespace gfxrecon::util;
+    ToStringFlags toStringFlags = kToString_Default;
+    uint32_t tabCount = 0;
+    uint32_t tabSize = 4;
+    WriteApiCallToFile(call_info, "vkGetImageSubresourceLayout2EXT", toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "device", toStringFlags, tabCount, tabSize, HandleIdToString(device));
+            FieldToString(strStrm, false, "image", toStringFlags, tabCount, tabSize, HandleIdToString(image));
+            FieldToString(strStrm, false, "pSubresource", toStringFlags, tabCount, tabSize, PointerDecoderToString(pSubresource, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "[out]pLayout", toStringFlags, tabCount, tabSize, PointerDecoderToString(pLayout, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
 void VulkanAsciiConsumer::Process_vkAcquireWinrtDisplayNV(
     const ApiCallInfo&                          call_info,
     VkResult                                    returnValue,
@@ -10356,6 +10396,28 @@ void VulkanAsciiConsumer::Process_vkGetMemoryRemoteAddressNV(
             FieldToString(strStrm, false, "device", toStringFlags, tabCount, tabSize, HandleIdToString(device));
             FieldToString(strStrm, false, "pMemoryGetRemoteAddressInfo", toStringFlags, tabCount, tabSize, PointerDecoderToString(pMemoryGetRemoteAddressInfo, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "[out]pAddress", toStringFlags, tabCount, tabSize, DataPointerDecoderToString(pAddress));
+        }
+    );
+}
+
+void VulkanAsciiConsumer::Process_vkGetPipelinePropertiesEXT(
+    const ApiCallInfo&                          call_info,
+    VkResult                                    returnValue,
+    format::HandleId                            device,
+    StructPointerDecoder<Decoded_VkPipelineInfoEXT>* pPipelineInfo,
+    StructPointerDecoder<Decoded_VkBaseOutStructure>* pPipelineProperties)
+{
+    using namespace gfxrecon::util;
+    ToStringFlags toStringFlags = kToString_Default;
+    uint32_t tabCount = 0;
+    uint32_t tabSize = 4;
+    WriteApiCallToFile(call_info, "vkGetPipelinePropertiesEXT", toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "return", toStringFlags, tabCount, tabSize, '"' + ToString(returnValue, toStringFlags, tabCount, tabSize) + '"');
+            FieldToString(strStrm, false, "device", toStringFlags, tabCount, tabSize, HandleIdToString(device));
+            FieldToString(strStrm, false, "pPipelineInfo", toStringFlags, tabCount, tabSize, PointerDecoderToString(pPipelineInfo, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "[out]pPipelineProperties", toStringFlags, tabCount, tabSize, PointerDecoderToString(pPipelineProperties, toStringFlags, tabCount, tabSize));
         }
     );
 }

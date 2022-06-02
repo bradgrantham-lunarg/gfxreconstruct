@@ -112,6 +112,11 @@ class LayerFuncTableGenerator(BaseGenerator):
 
     def endFile(self):
         """Method override."""
+        # Add the special-case internal loader/layer command 'vk_layerGetPhysicalDeviceProcAddr'
+        self.newline()
+        write('    // Special case handling of "vk_layerGetPhysicalDeviceProcAddr"', file=self.outFile)
+        align = 100 - len('vk_layerGetPhysicalDeviceProcAddr')
+        write('    { "vk_layerGetPhysicalDeviceProcAddr",%sreinterpret_cast<PFN_vkVoidFunction>(gfxrecon::GetPhysicalDeviceProcAddr) },' % (' ' * align), file=self.outFile)
         write('};', file=self.outFile)
         self.newline()
         write('GFXRECON_END_NAMESPACE(gfxrecon)', file=self.outFile)

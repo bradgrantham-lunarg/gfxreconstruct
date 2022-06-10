@@ -20,6 +20,9 @@
 ** DEALINGS IN THE SOFTWARE.
 */
 
+        
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "file_optimizer.h"
 
 #include "format/format_util.h"
@@ -32,11 +35,15 @@ GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 
 FileOptimizer::FileOptimizer(const std::unordered_set<format::HandleId>& unreferenced_ids) :
     unreferenced_ids_(unreferenced_ids)
-{}
+{
+    GFXRECON_LOG_INFO("unreferenced_ids.size() == %zd\n", unreferenced_ids.size());
+}
 
 FileOptimizer::FileOptimizer(std::unordered_set<format::HandleId>&& unreferenced_ids) :
     unreferenced_ids_(std::move(unreferenced_ids))
-{}
+{
+    GFXRECON_LOG_INFO("unreferenced_ids_.size() == %zd\n", unreferenced_ids_.size());
+}
 
 bool FileOptimizer::ProcessMetaData(const format::BlockHeader& block_header, format::MetaDataId meta_data_id)
 {
@@ -56,6 +63,8 @@ bool FileOptimizer::ProcessMetaData(const format::BlockHeader& block_header, for
     }
 }
 
+int which = 0;
+
 bool FileOptimizer::FilterInitBufferMetaData(const format::BlockHeader& block_header, format::MetaDataId meta_data_id)
 {
     assert(format::GetMetaDataType(meta_data_id) == format::MetaDataType::kInitBufferCommand);
@@ -72,17 +81,26 @@ bool FileOptimizer::FilterInitBufferMetaData(const format::BlockHeader& block_he
         // Total number of bytes remaining to be read for the current block.
         uint64_t unread_bytes = block_header.size - (sizeof(header) - sizeof(block_header));
 
+        int startkeeping = atoi(getenv("START_KEEPING"));
+        int endkeeping = atoi(getenv("END_KEEPING"));
+
+        bool is_unreferenced = (unreferenced_ids_.find(header.buffer_id) != unreferenced_ids_.end());
+        bool force_keep = (which >= startkeeping) && (which <= endkeeping);
+
         // If the buffer is in the unused list, omit its initialization data from the file.
-        if (unreferenced_ids_.find(header.buffer_id) != unreferenced_ids_.end())
+        if (is_unreferenced && !force_keep)
         {
             if (!SkipBytes(unread_bytes))
             {
                 HandleBlockReadError(kErrorSeekingFile, "Failed to skip init buffer data meta-data block data");
-                return false;
+                    return false;
             }
         }
         else
         {
+            if(is_unreferenced && (startkeeping == endkeeping)) {
+                printf("culprit is buffer meta data ID %" PRIu64 "\n", header.buffer_id);
+            }
             // Copy the block from the input file to the output file.
             header.meta_header.block_header   = block_header;
             header.meta_header.meta_data_id   = meta_data_id;
@@ -99,6 +117,9 @@ bool FileOptimizer::FilterInitBufferMetaData(const format::BlockHeader& block_he
                 HandleBlockCopyError(kErrorCopyingBlockData, "Failed to copy init buffer data meta-data block data");
                 return false;
             }
+        }
+        if (is_unreferenced) {
+            which++;
         }
     }
     else
@@ -130,8 +151,14 @@ bool FileOptimizer::FilterInitImageMetaData(const format::BlockHeader& block_hea
         // Total number of bytes remaining to be read for the current block.
         uint64_t unread_bytes = block_header.size - (sizeof(header) - sizeof(block_header));
 
+        int startkeeping = atoi(getenv("START_KEEPING"));
+        int endkeeping = atoi(getenv("END_KEEPING"));
+
+        bool is_unreferenced = (unreferenced_ids_.find(header.image_id) != unreferenced_ids_.end());
+        bool force_keep = (which >= startkeeping) && (which <= endkeeping);
+
         // If the image is in the unused list, omit its initialization data from the file.
-        if (unreferenced_ids_.find(header.image_id) != unreferenced_ids_.end())
+        if (is_unreferenced && !force_keep)
         {
             if (!SkipBytes(unread_bytes))
             {
@@ -141,6 +168,10 @@ bool FileOptimizer::FilterInitImageMetaData(const format::BlockHeader& block_hea
         }
         else
         {
+            if(is_unreferenced && (startkeeping == endkeeping)) {
+                printf("culprit is image ID %" PRIu64 "\n", header.image_id);
+            }
+
             // Copy the block from the input file to the output file.
             header.meta_header.block_header   = block_header;
             header.meta_header.meta_data_id   = meta_data_id;
@@ -157,6 +188,9 @@ bool FileOptimizer::FilterInitImageMetaData(const format::BlockHeader& block_hea
                 HandleBlockCopyError(kErrorCopyingBlockData, "Failed to copy init image data meta-data block data");
                 return false;
             }
+        }
+        if (is_unreferenced) {
+            which++;
         }
     }
     else

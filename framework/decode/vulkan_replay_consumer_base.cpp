@@ -1074,7 +1074,7 @@ void VulkanReplayConsumerBase::ProcessSetSwapchainImageStateQueueSubmit(
                     // TODO: Handle case where image acquired at replay does not match image acquired at capture.
                     assert(image_index == i);
                     if(image_index != i) {
-                        GFXRECON_LOG_WARNING("ProcessSetSwapchainImageStateQueueSubmit replay acquired image is %" PRId32 ", captured %" PRId32 "\n");
+                        GFXRECON_LOG_WARNING("ProcessSetSwapchainImageStateQueueSubmit replay acquired image is %" PRId32 ", captured %" PRId32 "\n", image_index, i);
                     }
 
                     result = table->WaitForFences(device, 1, &wait_fence, true, std::numeric_limits<uint64_t>::max());

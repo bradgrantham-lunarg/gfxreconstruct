@@ -707,6 +707,7 @@ void VulkanReferencedResourceConsumerBase::AddImagesToContainer(format::HandleId
 
     AddDescriptorToContainer(
         container_id, binding, element, count, [&](uint32_t index, int32_t current_binding, uint32_t current_element) {
+            printf("add 0x%" PRIx64 " to 0x%" PRIx64 "\n", image_infos[index].imageView, container_id);
             table_.AddResourceToContainer(container_id, image_infos[index].imageView, current_binding, current_element);
         });
 }

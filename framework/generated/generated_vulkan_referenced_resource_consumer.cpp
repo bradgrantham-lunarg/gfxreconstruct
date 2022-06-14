@@ -78,6 +78,7 @@ void VulkanReferencedResourceConsumer::Process_vkCmdBindDescriptorSets(
         size_t pDescriptorSets_count = pDescriptorSets->GetLength();
         for (size_t pDescriptorSets_index = 0; pDescriptorSets_index < pDescriptorSets_count; ++pDescriptorSets_index)
         {
+            printf("AddContainerToUser(commandBuffer = 0x%" PRIx64 ", descriptorSet = 0x%" PRIx64 ")\n", commandBuffer, pDescriptorSets_ptr[pDescriptorSets_index]);
             GetTable().AddContainerToUser(commandBuffer, pDescriptorSets_ptr[pDescriptorSets_index]);
         }
     }

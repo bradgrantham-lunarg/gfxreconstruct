@@ -146,6 +146,8 @@ bool FileOptimizer::FilterInitImageMetaData(const format::BlockHeader& block_hea
     success      = success && ReadBytes(&header.layout, sizeof(header.layout));
     success      = success && ReadBytes(&header.level_count, sizeof(header.level_count));
 
+    printf("InitImageCommand for image ID %" PRIu64 " (%" PRIx64 ")\n", header.image_id, header.image_id);
+
     if (success)
     {
         // Total number of bytes remaining to be read for the current block.
@@ -169,7 +171,7 @@ bool FileOptimizer::FilterInitImageMetaData(const format::BlockHeader& block_hea
         else
         {
             if(is_unreferenced && (startkeeping == endkeeping)) {
-                printf("culprit is image ID %" PRIu64 "\n", header.image_id);
+                printf("culprit is image ID %" PRIu64 " (%" PRIx64 ")\n", header.image_id, header.image_id);
             }
 
             // Copy the block from the input file to the output file.

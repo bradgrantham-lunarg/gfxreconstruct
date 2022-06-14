@@ -123,7 +123,7 @@ class VulkanAsciiConsumerBase : public VulkanConsumer
         fprintf(file_, "%s", ObjectToString(toStringFlags, tabCount, tabSize, toStringFunction).c_str());
     }
 
-  private:
+  // private:
     FILE* file_{ nullptr };
 };
 

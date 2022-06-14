@@ -372,6 +372,7 @@ void ReferencedResourceTable::ProcessUserSubmission(format::HandleId user_id)
                 if (!resource_info.second.expired())
                 {
                     auto resource_info_ptr  = resource_info.second.lock();
+                    printf("mark 0x%" PRIx64 " used directly\n", resource_info.first);
                     resource_info_ptr->used = true;
                 }
             }
@@ -385,6 +386,9 @@ void ReferencedResourceTable::ProcessUserSubmission(format::HandleId user_id)
                     {
                         if (!resource_info.second.expired())
                         {
+                            printf("mark 0x%" PRIx64 " used through container 0x%" PRIx64 "\n",
+                                   resource_info.first,
+                                   container_info.first);
                             auto resource_info_ptr  = resource_info.second.lock();
                             resource_info_ptr->used = true;
                         }

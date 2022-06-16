@@ -28,6 +28,11 @@
 
 add_executable(gfxrecon-extract "")
 
+target_compile_options(gfxrecon-extract PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 target_sources(gfxrecon-extract
                PRIVATE
                    ${CMAKE_CURRENT_LIST_DIR}/main.cpp

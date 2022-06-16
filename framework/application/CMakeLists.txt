@@ -28,6 +28,11 @@
 
 add_library(gfxrecon_application STATIC "")
 
+target_compile_options(gfxrecon_application PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 target_sources(gfxrecon_application
                PRIVATE
                     ${CMAKE_CURRENT_LIST_DIR}/application.h

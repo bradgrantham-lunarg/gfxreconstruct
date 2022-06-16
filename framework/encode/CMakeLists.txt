@@ -28,6 +28,11 @@
 
 add_library(gfxrecon_encode STATIC "")
 
+target_compile_options(gfxrecon_encode PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 target_sources(gfxrecon_encode
                PRIVATE
                     ${CMAKE_CURRENT_LIST_DIR}/capture_manager.h

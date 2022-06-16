@@ -10,6 +10,11 @@ add_subdirectory(../framework/encode ${CMAKE_SOURCE_DIR}/../framework/encode/bui
 
 add_library(VkLayer_gfxreconstruct SHARED "")
 
+target_compile_options(VkLayer_gfxreconstruct PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 target_sources(VkLayer_gfxreconstruct
                PRIVATE
                    ${GFXRECON_SOURCE_DIR}/layer/dll_main.cpp

@@ -28,6 +28,11 @@
 
 add_executable(gfxrecon-toascii "")
 
+target_compile_options(gfxrecon-toascii PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 target_sources(gfxrecon-toascii
                PRIVATE
                     ${CMAKE_CURRENT_LIST_DIR}/../tool_settings.h

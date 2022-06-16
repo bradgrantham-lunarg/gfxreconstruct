@@ -28,6 +28,11 @@
 
 add_library(gfxrecon_decode STATIC "")
 
+target_compile_options(gfxrecon_decode PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 target_sources(gfxrecon_decode
                PRIVATE
                     ${CMAKE_CURRENT_LIST_DIR}/annotation_handler.h

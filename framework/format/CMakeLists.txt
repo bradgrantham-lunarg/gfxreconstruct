@@ -28,6 +28,11 @@
 
 add_library(gfxrecon_format STATIC "")
 
+target_compile_options(gfxrecon_format PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 target_sources(gfxrecon_format
                PRIVATE
                     ${CMAKE_CURRENT_LIST_DIR}/api_call_id.h

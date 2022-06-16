@@ -28,6 +28,11 @@
 
 add_library(VkLayer_gfxreconstruct SHARED "")
 
+target_compile_options(VkLayer_gfxreconstruct PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 target_sources(VkLayer_gfxreconstruct
                PRIVATE
                    ${CMAKE_CURRENT_LIST_DIR}/dll_main.cpp

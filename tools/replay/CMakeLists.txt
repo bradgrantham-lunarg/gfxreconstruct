@@ -28,6 +28,11 @@
 
 add_executable(gfxrecon-replay "")
 
+target_compile_options(gfxrecon-replay PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 target_sources(gfxrecon-replay
                PRIVATE
                     ${CMAKE_CURRENT_LIST_DIR}/../tool_settings.h

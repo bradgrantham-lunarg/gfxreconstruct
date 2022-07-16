@@ -984,6 +984,9 @@ void VulkanReplayConsumerBase::ProcessSetSwapchainImageStateQueueSubmit(
     auto table  = GetDeviceTable(device);
     assert(table != nullptr);
 
+    if (table->GFXRStopRecording != encode::noop::GFXRStopRecording)
+        table->GFXRStopRecording();
+
     VkResult        result             = VK_SUCCESS;
     VkQueue         queue              = VK_NULL_HANDLE;
     VkCommandPool   pool               = VK_NULL_HANDLE;
@@ -1281,6 +1284,9 @@ void VulkanReplayConsumerBase::ProcessSetSwapchainImageStateQueueSubmit(
     {
         table->DestroyFence(device, wait_fence, nullptr);
     }
+
+    if (table->GFXRResumeRecording != encode::noop::GFXRResumeRecording)
+        table->GFXRResumeRecording();
 }
 
 void VulkanReplayConsumerBase::ProcessBeginResourceInitCommand(format::HandleId device_id,

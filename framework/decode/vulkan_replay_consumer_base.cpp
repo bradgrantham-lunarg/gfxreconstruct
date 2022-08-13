@@ -155,14 +155,14 @@ VulkanReplayConsumerBase::VulkanReplayConsumerBase(std::shared_ptr<application::
         InitializeScreenshotHandler();
     }
 
-    // Process option to select swapchain handler. The options is '--virtual-swapchain'.
-    if (options.enable_virtual_swapchain)
+    // Process option to select swapchain handler. The options is '--use-captured-swapchain-indices'.
+    if (options.enable_use_captured_swapchain_indices)
     {
-        swapchain_ = std::make_unique<VulkanVirtualSwapchain>();
+        swapchain_ = std::make_unique<VulkanDefaultSwapchain>();
     }
     else
     {
-        swapchain_ = std::make_unique<VulkanDefaultSwapchain>();
+        swapchain_ = std::make_unique<VulkanVirtualSwapchain>();
     }
 }
 

@@ -90,7 +90,7 @@ VkResult VulkanDefaultSwapchain::GetSwapchainImagesKHR(PFN_vkGetSwapchainImagesK
         GFXRECON_LOG_FATAL("The number of images returned by vkGetSwapchainImageKHR is different than the number "
                            "returned at capture, which may cause replay to fail.");
         GFXRECON_LOG_FATAL(
-            "Try replay with the virtual swapchain mode enabled via the \"--virtual-swapchain\" option.");
+            "Try replay with the virtual swapchain mode via removing \"--use-captured-swapchain-indices\" option.");
     }
 
     return result;
@@ -151,7 +151,7 @@ VkResult VulkanDefaultSwapchain::AcquireNextImageKHR(PFN_vkAcquireNextImageKHR f
         GFXRECON_LOG_FATAL("The image index returned by vkAcquireNextImageKHR is different than the index "
                            "returned at capture, which may cause replay to fail.");
         GFXRECON_LOG_FATAL(
-            "Try replay with the virtual swapchain mode enabled via the \"--virtual-swapchain\" option.");
+            "Try replay with the virtual swapchain mode via removing \"--use-captured-swapchain-indices\" option.");
     }
 
     return result;
@@ -180,7 +180,7 @@ VkResult VulkanDefaultSwapchain::AcquireNextImage2KHR(PFN_vkAcquireNextImage2KHR
         GFXRECON_LOG_FATAL("The image index returned by vkAcquireNextImageKHR is different than the index "
                            "returned at capture, which may cause replay to fail.");
         GFXRECON_LOG_FATAL(
-            "Try replay with the virtual swapchain mode enabled via the \"--virtual-swapchain\" option.");
+            "Try replay with the virtual swapchain mode via removing \"--use-captured-swapchain-indices\" option.");
     }
 
     return result;

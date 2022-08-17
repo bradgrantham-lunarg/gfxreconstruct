@@ -186,7 +186,9 @@ VkResult VulkanVirtualSwapchain::GetSwapchainImagesKHR(PFN_vkGetSwapchainImagesK
             // Store the retrieved images and create new images to return to the caller.  The replay call always
             // retrieves the full swapchain image count, so this only needs to be done once.  It does not need to handle
             // the VK_INCOMPLETE case that the virtual image creation must handle.
-            if (swapchain_info->swapchain_images.empty())
+            assert(replay_swapchain_images.data());
+            assert(*replay_image_count > 0);
+            if (swapchain_info->swapchain_images.empty() && !replay_swapchain_images.empty())
             {
                 swapchain_info->swapchain_images = std::vector<VkImage>(
                     replay_swapchain_images.data(), std::next(replay_swapchain_images.data(), *replay_image_count));

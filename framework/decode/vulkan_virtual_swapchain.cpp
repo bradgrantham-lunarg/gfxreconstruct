@@ -126,7 +126,9 @@ VkResult VulkanVirtualSwapchain::GetSwapchainImagesKHR(PFN_vkGetSwapchainImagesK
         if (images != nullptr)
         {
             GFXRECON_LOG_INFO("images != nullptr\n");
+            GFXRECON_LOG_INFO("replay_swapchain_images.resize(%u)\n", *replay_image_count);
             replay_swapchain_images.resize(*replay_image_count);
+            GFXRECON_LOG_INFO("replay_swapchain_images.size() = %zd\n", replay_swapchain_images.size());
         }
     }
 

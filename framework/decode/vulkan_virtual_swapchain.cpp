@@ -119,11 +119,13 @@ VkResult VulkanVirtualSwapchain::GetSwapchainImagesKHR(PFN_vkGetSwapchainImagesK
 
     if (swapchain_info != nullptr)
     {
+        GFXRECON_LOG_INFO("swapchain_info != nullptr\n");
         swapchain          = swapchain_info->handle;
         replay_image_count = &swapchain_info->replay_image_count;
 
         if (images != nullptr)
         {
+            GFXRECON_LOG_INFO("images != nullptr\n");
             replay_swapchain_images.resize(*replay_image_count);
         }
     }
@@ -186,8 +188,7 @@ VkResult VulkanVirtualSwapchain::GetSwapchainImagesKHR(PFN_vkGetSwapchainImagesK
             // Store the retrieved images and create new images to return to the caller.  The replay call always
             // retrieves the full swapchain image count, so this only needs to be done once.  It does not need to handle
             // the VK_INCOMPLETE case that the virtual image creation must handle.
-            // assert(replay_swapchain_images.data());
-            assert(*replay_image_count > 0);
+            GFXRECON_LOG_INFO("replay_swapchain_images.size() = %zd, *replay_image_count = %u, replay_swapchain_images.empty = %s\n", replay_swapchain_images.size(), *replay_image_count, replay_swapchain_images.empty() ? "true" : "false");
             if (swapchain_info->swapchain_images.empty() && !replay_swapchain_images.empty())
             {
                 swapchain_info->swapchain_images = std::vector<VkImage>(
@@ -282,6 +283,7 @@ VkResult VulkanVirtualSwapchain::GetSwapchainImagesKHR(PFN_vkGetSwapchainImagesK
 
                 for (uint32_t i = 0; i < *replay_image_count; ++i)
                 {
+                    printf("%d, %p\n", i, replay_swapchain_images[i]);
                     barrier.image = replay_swapchain_images[i];
                     device_table_->CmdPipelineBarrier(command_buffer,
                                                       VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,

@@ -174,14 +174,16 @@ int main(int argc, const char** argv)
             }
         }
     }
-    catch (std::runtime_error error)
+    catch (const std::runtime_error& error)
     {
-        GFXRECON_WRITE_CONSOLE("Replay has encountered a fatal error and cannot continue: %s", error.what());
+        GFXRECON_WRITE_CONSOLE("Replay has encountered a fatal error and cannot continue");
+        GFXRECON_WRITE_CONSOLE("runtime_error message was: %s", error.what());
         return_code = -1;
     }
     catch (const std::exception& error)
     {
-        GFXRECON_WRITE_CONSOLE("Replay has encountered a fatal error and cannot continue: %s", error.what());
+        GFXRECON_WRITE_CONSOLE("Replay has encountered a fatal error and cannot continue");
+        GFXRECON_WRITE_CONSOLE("exception message was: %s", error.what());
         return_code = -1;
     }
     catch (...)

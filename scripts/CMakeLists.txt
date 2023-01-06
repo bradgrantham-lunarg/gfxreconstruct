@@ -1,6 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018-2020 LunarG, Inc.
-# Copyright (c) 2021 Advanced Micro Devices, Inc.
+# Copyright (c) 2018-2023 LunarG, Inc.
 # All rights reserved
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,23 +21,27 @@
 # IN THE SOFTWARE.
 #
 # Author: LunarG Team
-# Author: AMD Developer Tools Team
-# Description: CMake script for layer dxgi target
+# Description: CMake script for scripts target
 ###############################################################################
 
-set(LINK_DXGI_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/dxgi_ms.lib)
+if (D3D12_SUPPORT)
 
-add_library(dxgi SHARED "")
-target_sources(dxgi PRIVATE
-                ${CMAKE_CURRENT_LIST_DIR}/dll_main.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/hook_dxgi.h
-                ${CMAKE_CURRENT_LIST_DIR}/hook_dxgi.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/dxgi.def)
-target_include_directories(dxgi PUBLIC ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
-target_link_libraries(dxgi gfxrecon_encode gfxrecon_util ${LINK_DXGI_OUTPUT})
-common_build_directives(dxgi)
-add_custom_command(TARGET dxgi PRE_BUILD
-                    COMMAND lib /def:${CMAKE_CURRENT_LIST_DIR}/dxgi_ms.def /out:${LINK_DXGI_OUTPUT} /machine:${LINK_ARCH}
-                    DEPENDS ${CMAKE_CURRENT_LIST_DIR}/dxgi_ms.def)
+    add_custom_target(gfxrecon-optimize-renamed.py ALL)
 
-install(FILES $<TARGET_FILE_DIR:dxgi>/dxgi.dll DESTINATION ${CMAKE_INSTALL_BINDIR}/D3D12)
+    add_custom_command(TARGET gfxrecon-optimize-renamed.py
+                       DEPENDS ${CMAKE_SOURCE_SOURCE_DIR}/gfxrecon-optimize-renamed.py
+                       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/gfxrecon-optimize-renamed.py ${CMAKE_CURRENT_BINARY_DIR}/gfxrecon-optimize-renamed.py)
+
+    install(FILES gfxrecon-optimize-renamed.py DESTINATION ${CMAKE_INSTALL_BINDIR} PERMISSIONS
+            OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+    add_custom_target(gfxrecon-replay-renamed.py ALL)
+
+    add_custom_command(TARGET gfxrecon-replay-renamed.py
+                       DEPENDS ${CMAKE_SOURCE_SOURCE_DIR}/gfxrecon-replay-renamed.py
+                       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/gfxrecon-replay-renamed.py ${CMAKE_CURRENT_BINARY_DIR}/gfxrecon-replay-renamed.py)
+
+    install(FILES gfxrecon-replay-renamed.py DESTINATION ${CMAKE_INSTALL_BINDIR} PERMISSIONS
+            OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+endif()

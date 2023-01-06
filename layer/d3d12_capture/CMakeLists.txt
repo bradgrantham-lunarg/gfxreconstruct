@@ -39,3 +39,5 @@ target_include_directories(d3d12_capture
 
 target_link_libraries(d3d12_capture gfxrecon_encode gfxrecon_format gfxrecon_util platform_specific)
 common_build_directives(d3d12_capture)
+
+install(FILES $<TARGET_FILE_DIR:d3d12_capture>/d3d12_capture.dll DESTINATION ${CMAKE_INSTALL_BINDIR}/D3D12)

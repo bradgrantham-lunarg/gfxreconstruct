@@ -2214,6 +2214,7 @@ VulkanReplayConsumerBase::OverrideCreateInstance(VkResult original_result,
             // If a specific WSI extension was selected on the command line we need to make sure that extension is
             // loaded and other WSI extensions are disabled
             assert(application_);
+            printf("GetWsiContexts() is %s\n", application_->GetWsiContexts().empty() ? "empty" : "not empty");
             const bool override_wsi_extensions = !application_->GetWsiContexts().empty();
 
             for (const auto& itr : application_->GetWsiContexts())
@@ -2232,6 +2233,9 @@ VulkanReplayConsumerBase::OverrideCreateInstance(VkResult original_result,
                 const auto current_extension = replay_create_info->ppEnabledExtensionNames[i];
                 const bool is_surface_extension =
                     kSurfaceExtensions.find(current_extension) != kSurfaceExtensions.end();
+                printf("current extension %s, is_surface_extension = %s\n",
+                       current_extension,
+                       is_surface_extension ? "true" : "false");
                 if (is_surface_extension)
                 {
                     if (!override_wsi_extensions)
@@ -2246,12 +2250,24 @@ VulkanReplayConsumerBase::OverrideCreateInstance(VkResult original_result,
                 }
             }
 
+            printf("%d filtered_extensions = {", __LINE__);
+            for(const auto &e: filtered_extensions) {
+                printf("%s, ", e);
+            }
+            printf("}\n");
+
             if (extension_query_result == VK_SUCCESS)
             {
                 if (options_.remove_unsupported_features)
                 {
                     // Remove enabled extensions that are not available from the replay instance.
                     feature_util::RemoveUnsupportedExtensions(available_extensions, &filtered_extensions);
+
+                    printf("%d filtered_extensions = {", __LINE__);
+                    for(const auto &e: filtered_extensions) {
+                        printf("%s, ", e);
+                    }
+                    printf("}\n");
                 }
                 else
                 {
@@ -2272,6 +2288,7 @@ VulkanReplayConsumerBase::OverrideCreateInstance(VkResult original_result,
                 GFXRECON_LOG_WARNING("Failed to get instance extensions. Cannot perform sanity checks or filters for "
                                      "extension availability.");
             }
+
         }
 
         // Enable validation layer and create a debug messenger if the enable_validation_layer replay option is set.
@@ -2364,6 +2381,12 @@ VulkanReplayConsumerBase::OverrideCreateInstance(VkResult original_result,
         modified_create_info.ppEnabledLayerNames = filtered_layers.data();
     }
 
+    printf("%d modified_create_info.ppEnabledExtensionNames = {", __LINE__);
+    for (uint32_t i = 0; i < modified_create_info.enabledExtensionCount; i++)
+    {
+        printf("%s, ", modified_create_info.ppEnabledExtensionNames[i]);
+    }
+    printf("}\n");
     VkResult result = create_instance_proc_(&modified_create_info, GetAllocationCallbacks(pAllocator), replay_instance);
 
     if ((replay_instance != nullptr) && (result == VK_SUCCESS))

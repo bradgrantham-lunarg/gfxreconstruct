@@ -47,7 +47,7 @@ jobs:
         then
           clang-format --version # A check for version 9 should be added.
           git fetch origin ${{ github.base_ref }} # Fetch target branch to FETCH_HEAD for code style check.
-          python3 scripts/build.py --skip-tests --config ${{ matrix.config.type }} --check-code-style-base FETCH_HEAD
+          python3 scripts/build.py --config ${{ matrix.config.type }} --check-code-style-base FETCH_HEAD
         else
           python3 scripts/build.py --config ${{ matrix.config.type }} --skip-check-code-style
         fi
@@ -96,7 +96,7 @@ jobs:
       run: |
         if ( "${{ matrix.config.type }}" -eq "release" )
         {
-          python scripts\build.py --skip-check-code-style --skip-tests --config ${{ matrix.config.type }}
+          python scripts\build.py --skip-check-code-style --config ${{ matrix.config.type }}
         } else {
           python scripts\build.py --skip-check-code-style --config ${{ matrix.config.type }}
         }

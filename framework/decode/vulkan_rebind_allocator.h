@@ -338,6 +338,7 @@ class VulkanRebindAllocator : public VulkanResourceAllocator
                                    const uint8_t*     data);
 
     void WriteBoundResourceDirect(ResourceAllocInfo* resource_alloc_info,
+                                  void*              mapped_pointer,
                                   size_t             src_offset,
                                   size_t             dst_offset,
                                   size_t             data_size,

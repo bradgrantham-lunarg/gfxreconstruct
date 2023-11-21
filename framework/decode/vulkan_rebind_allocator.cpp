@@ -940,11 +940,11 @@ void VulkanRebindAllocator::ReportBindImage2Incompatibility(uint32_t            
 }
 
 void VulkanRebindAllocator::WriteBoundResourceDirect(
-    ResourceAllocInfo* resource_alloc_info, size_t src_offset, size_t dst_offset, size_t data_size, const uint8_t* data)
+    ResourceAllocInfo* resource_alloc_info, void* mapped_pointer, size_t src_offset, size_t dst_offset, size_t data_size, const uint8_t* data)
 {
     if (!resource_alloc_info->is_image)
     {
-        util::platform::MemoryCopy(static_cast<uint8_t*>(resource_alloc_info->mapped_pointer) + dst_offset,
+        util::platform::MemoryCopy(static_cast<uint8_t*>(mapped_pointer) + dst_offset,
                                    data_size,
                                    data + src_offset,
                                    data_size);
@@ -963,7 +963,7 @@ void VulkanRebindAllocator::WriteBoundResourceDirect(
                 size_t original_row_pitch = static_cast<size_t>(layouts.original.rowPitch);
                 size_t rebind_row_pitch   = static_cast<size_t>(layouts.rebind.rowPitch);
 
-                resource::CopyImageSubresourceMemory(static_cast<uint8_t*>(resource_alloc_info->mapped_pointer),
+                resource::CopyImageSubresourceMemory(static_cast<uint8_t*>(mapped_pointer),
                                                      data + src_offset,
                                                      dst_offset,
                                                      data_size,
@@ -983,7 +983,7 @@ void VulkanRebindAllocator::WriteBoundResourceDirect(
             GFXRECON_LOG_WARNING("Image subresource layout info is not available for mapped memory write; "
                                  "capture/replay memory alignment differences will not be handled properly");
 
-            util::platform::MemoryCopy(static_cast<uint8_t*>(resource_alloc_info->mapped_pointer) + dst_offset,
+            util::platform::MemoryCopy(static_cast<uint8_t*>(mapped_pointer) + dst_offset,
                                        data_size,
                                        data + src_offset,
                                        data_size);
@@ -997,6 +997,7 @@ void VulkanRebindAllocator::WriteBoundResourceStaging(
     if (resource_alloc_info->is_image && dst_offset != 0)
     {
         // TODO implement offset based stagging image copy
+        GFXRECON_LOG_WARNING("Resource update write with a destination offset is unimplemented - skipping")
         return;
     }
 
@@ -1020,17 +1021,16 @@ void VulkanRebindAllocator::WriteBoundResourceStaging(
                                       &staging_alloc,
                                       &staging_alloc_info);
 
-    void* copy_mapped_pointer{ resource_alloc_info->mapped_pointer };
+    void* mapped_staging;
 
     if (result == VK_SUCCESS)
     {
-        result = vmaMapMemory(allocator_, staging_alloc, &resource_alloc_info->mapped_pointer);
+        result = vmaMapMemory(allocator_, staging_alloc, &mapped_staging);
     }
 
     if (result == VK_SUCCESS)
     {
-        WriteBoundResourceDirect(resource_alloc_info, src_offset, 0, data_size, data);
-        resource_alloc_info->mapped_pointer = copy_mapped_pointer;
+        WriteBoundResourceDirect(resource_alloc_info, mapped_staging, src_offset, 0, data_size, data);
         vmaFlushAllocation(allocator_, staging_alloc, 0, VK_WHOLE_SIZE);
         vmaUnmapMemory(allocator_, staging_alloc);
 
@@ -1148,7 +1148,7 @@ void VulkanRebindAllocator::WriteBoundResource(ResourceAllocInfo* resource_alloc
 
         if (result == VK_SUCCESS)
         {
-            WriteBoundResourceDirect(resource_alloc_info, copy_src_offset, copy_dst_offset, copy_size, data);
+            WriteBoundResourceDirect(resource_alloc_info, resource_alloc_info->mapped_pointer, copy_src_offset, copy_dst_offset, copy_size, data);
         }
         else
         {

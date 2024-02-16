@@ -84,7 +84,7 @@ _remove_extensions = [
     ## This extension was still baking despite being released to public in header
     ## 1.3.262. It breaks codegen with its non-const pInfoXs.
     ## @todo Check for pInfo ptrs changed to const in header updates.
-    "VK_NV_low_latency2",
+    # "VK_NV_low_latency2",
     "VK_NV_memory_decompression",
     "VK_QNX_external_memory_screen_buffer",
     "VK_NV_cuda_kernel_launch",

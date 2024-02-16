@@ -708,6 +708,11 @@ enum ApiCallId : uint32_t
     ApiCall_vkCmdPushDescriptorSetWithTemplate2KHR                                                = MakeApiCallId(ApiFamily_Vulkan, 0x12e2),
     ApiCall_vkCmdSetDescriptorBufferOffsets2EXT                                                   = MakeApiCallId(ApiFamily_Vulkan, 0x12e3),
     ApiCall_vkCmdBindDescriptorBufferEmbeddedSamplers2EXT                                         = MakeApiCallId(ApiFamily_Vulkan, 0x12e4),
+    ApiCall_vkSetLatencySleepModeNV                                                               = MakeApiCallId(ApiFamily_Vulkan, 0x12e5),
+    ApiCall_vkLatencySleepNV                                                                      = MakeApiCallId(ApiFamily_Vulkan, 0x12e6),
+    ApiCall_vkSetLatencyMarkerNV                                                                  = MakeApiCallId(ApiFamily_Vulkan, 0x12e7),
+    ApiCall_vkGetLatencyTimingsNV                                                                 = MakeApiCallId(ApiFamily_Vulkan, 0x12e8),
+    ApiCall_vkQueueNotifyOutOfBandNV                                                              = MakeApiCallId(ApiFamily_Vulkan, 0x12e9),
 
     ApiCall_VulkanLast,
 

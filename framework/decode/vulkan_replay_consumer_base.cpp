@@ -2690,31 +2690,30 @@ VulkanReplayConsumerBase::OverrideCreateDevice(VkResult            original_resu
             const encode::DeviceTable* device_table = GetDeviceTable(*replay_device);
             if (!allocator->SupportsOpaqueDeviceAddresses())
             {
-                VulkanAccelerationStructureBuilder::Functions as_builder_functions = {
-                    .get_acceleration_structure_build_sizes    = device_table->GetAccelerationStructureBuildSizesKHR,
-                    .create_acceleration_structure             = device_table->CreateAccelerationStructureKHR,
-                    .get_buffer_device_address                 = device_table->GetBufferDeviceAddressKHR,
-                    .cmd_build_acceleration_structures         = device_table->CmdBuildAccelerationStructuresKHR,
-                    .get_acceleration_structure_device_address = device_table->GetAccelerationStructureDeviceAddressKHR,
-                    .get_buffer_memory_requirements            = device_table->GetBufferMemoryRequirements,
-                    .cmd_copy_acceleration_structure           = device_table->CmdCopyAccelerationStructureKHR,
-                    .cmd_write_acceleration_structures_properties =
-                        device_table->CmdWriteAccelerationStructuresPropertiesKHR,
-                    .destroy_acceleration_structure = device_table->DestroyAccelerationStructureKHR,
-                    .create_command_pool            = device_table->CreateCommandPool,
-                    .destroy_command_pool           = device_table->DestroyCommandPool,
-                    .allocate_command_buffers       = device_table->AllocateCommandBuffers,
-                    .get_device_queue               = device_table->GetDeviceQueue,
-                    .begin_command_buffer           = device_table->BeginCommandBuffer,
-                    .end_command_buffer             = device_table->EndCommandBuffer,
-                    .reset_command_buffer           = device_table->ResetCommandBuffer,
-                    .queue_submit                   = device_table->QueueSubmit,
-                    .queue_wait_idle                = device_table->QueueWaitIdle,
-                    .update_descriptor_sets         = device_table->UpdateDescriptorSets,
-                    .get_query_pool_results         = device_table->GetQueryPoolResults,
-                    .cmd_copy_query_pool_results    = device_table->CmdCopyQueryPoolResults,
-                    .cmd_pipeline_barrier           = device_table->CmdPipelineBarrier,
-                };
+                VulkanAccelerationStructureBuilder::Functions as_builder_functions;
+                as_builder_functions.get_acceleration_structure_build_sizes    = device_table->GetAccelerationStructureBuildSizesKHR;
+                as_builder_functions.create_acceleration_structure             = device_table->CreateAccelerationStructureKHR;
+                as_builder_functions.get_buffer_device_address                 = device_table->GetBufferDeviceAddressKHR;
+                as_builder_functions.cmd_build_acceleration_structures         = device_table->CmdBuildAccelerationStructuresKHR;
+                as_builder_functions.get_acceleration_structure_device_address = device_table->GetAccelerationStructureDeviceAddressKHR;
+                as_builder_functions.get_buffer_memory_requirements            = device_table->GetBufferMemoryRequirements;
+                as_builder_functions.cmd_copy_acceleration_structure           = device_table->CmdCopyAccelerationStructureKHR;
+                as_builder_functions.cmd_write_acceleration_structures_properties = device_table->CmdWriteAccelerationStructuresPropertiesKHR;
+                as_builder_functions.destroy_acceleration_structure = device_table->DestroyAccelerationStructureKHR;
+                as_builder_functions.create_command_pool            = device_table->CreateCommandPool;
+                as_builder_functions.destroy_command_pool           = device_table->DestroyCommandPool;
+                as_builder_functions.allocate_command_buffers       = device_table->AllocateCommandBuffers;
+                as_builder_functions.get_device_queue               = device_table->GetDeviceQueue;
+                as_builder_functions.begin_command_buffer           = device_table->BeginCommandBuffer;
+                as_builder_functions.end_command_buffer             = device_table->EndCommandBuffer;
+                as_builder_functions.reset_command_buffer           = device_table->ResetCommandBuffer;
+                as_builder_functions.queue_submit                   = device_table->QueueSubmit;
+                as_builder_functions.queue_wait_idle                = device_table->QueueWaitIdle;
+                as_builder_functions.update_descriptor_sets         = device_table->UpdateDescriptorSets;
+                as_builder_functions.get_query_pool_results         = device_table->GetQueryPoolResults;
+                as_builder_functions.cmd_copy_query_pool_results    = device_table->CmdCopyQueryPoolResults;
+                as_builder_functions.cmd_pipeline_barrier           = device_table->CmdPipelineBarrier;
+
                 acceleration_structure_builders_[*pDevice->GetPointer()] =
                     std::make_unique<VulkanAccelerationStructureBuilder>(
                         as_builder_functions,

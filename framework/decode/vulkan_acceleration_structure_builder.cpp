@@ -226,9 +226,10 @@ std::unique_ptr<VulkanAccelerationStructureBuilder::BufferEntry> VulkanAccelerat
     graphics::FindMemoryTypeIndex(
         physical_device_memory_properties_, requirements.memoryTypeBits, desired_flags, &mem_type_index, &found_flags);
 
-    VkMemoryAllocateInfo allocate_info{ .sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-                                        .allocationSize  = requirements.size,
-                                        .memoryTypeIndex = mem_type_index };
+    VkMemoryAllocateInfo allocate_info;
+    allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocate_info.allocationSize  = requirements.size;
+    allocate_info.memoryTypeIndex = mem_type_index;
 
     VkDeviceMemory                      memory{};
     VulkanResourceAllocator::MemoryData memory_allocator_data{};
@@ -817,11 +818,11 @@ void VulkanAccelerationStructureBuilder::CmdWriteAccelerationStructuresPropertie
 VkDeviceAddress VulkanAccelerationStructureBuilder::GetAccelerationStructureDeviceAddress(
     VkAccelerationStructureKHR acceleration_structure)
 {
-    VkAccelerationStructureDeviceAddressInfoKHR info{
-        .sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
-        .pNext                 = nullptr,
-        .accelerationStructure = acceleration_structure
-    };
+    VkAccelerationStructureDeviceAddressInfoKHR info;
+    info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+    info.pNext                 = nullptr;
+    info.accelerationStructure = acceleration_structure;
+
     return functions_.get_acceleration_structure_device_address(device_, &info);
 }
 
@@ -831,12 +832,11 @@ VkAccelerationStructureKHR VulkanAccelerationStructureBuilder::CreateAcceleratio
     const VkAccelerationStructureBuildSizesInfoKHR& size_info,
     VkBuffer                                        storage)
 {
-    VkAccelerationStructureCreateInfoKHR create_info = {
-        .sType  = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR,
-        .buffer = storage,
-        .size   = size_info.accelerationStructureSize,
-        .type   = geometry_info.type,
-    };
+    VkAccelerationStructureCreateInfoKHR create_info;
+    create_info.sType  = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+    create_info.buffer = storage;
+    create_info.size   = size_info.accelerationStructureSize;
+    create_info.type   = geometry_info.type;
     VkAccelerationStructureKHR acceleration_structure;
     functions_.create_acceleration_structure(device_, &create_info, nullptr, &acceleration_structure);
     return acceleration_structure;

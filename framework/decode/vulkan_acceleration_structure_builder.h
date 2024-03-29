@@ -247,20 +247,18 @@ class VulkanAccelerationStructureBuilder
                             const VkDescriptorUpdateTemplateEntryKHR&          template_update_entry,
                             gfxrecon::decode::DescriptorUpdateTemplateDecoder* data)
         {
-            write_      = VkWriteDescriptorSet{ .sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                                                .pNext           = nullptr,
-                                                .dstSet          = descriptor_set,
-                                                .dstBinding      = template_update_entry.dstBinding,
-                                                .dstArrayElement = template_update_entry.dstArrayElement,
-                                                .descriptorCount =
-                                               static_cast<uint32_t>(data->GetAccelerationStructureKHRCount()),
-                                                .descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR };
-            p_next_data = VkWriteDescriptorSetAccelerationStructureKHR{
-                .sType                      = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR,
-                .pNext                      = nullptr,
-                .accelerationStructureCount = write_.descriptorCount,
-                .pAccelerationStructures    = nullptr
-            };
+            write_.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_.pNext           = nullptr;
+            write_.dstSet          = descriptor_set;
+            write_.dstBinding      = template_update_entry.dstBinding;
+            write_.dstArrayElement = template_update_entry.dstArrayElement;
+            write_.descriptorCount = static_cast<uint32_t>(data->GetAccelerationStructureKHRCount());
+            write_.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+
+            p_next_data.sType                      = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+            p_next_data.pNext                      = nullptr;
+            p_next_data.accelerationStructureCount = write_.descriptorCount;
+            p_next_data.pAccelerationStructures    = nullptr;
 
             acc_structs_data.reserve(p_next_data.accelerationStructureCount);
             std::copy(data->GetAccelerationStructureKHRPointer(),

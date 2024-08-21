@@ -3,6 +3,7 @@
 import math
 import json
 import sys
+import os
 
 # dictionary by HandleID of a (dictionary of "allocation" function and "commands" containing all the decoded JSON vkCmd functions)
 commandbuffers = {}
@@ -12,7 +13,6 @@ frame = 0 # GFXR's frame number minus 1
 frame_enqueued = {}
 
 functions_not_handled = set()
-commands_not_handled = set()
 
 summary = {}
 
@@ -107,10 +107,70 @@ for line in sys.stdin:
 
 html_header = """
 <html>
+<head>
+<title>Capture Analysis for %s</title>
+
+<style>
+    .collapsible {
+        background-color: #777;
+        color: white;
+        cursor: pointer;
+        padding: 18px;
+        blarg-width: 40%%;
+        border: none;
+        text-align: left;
+        outline: none;
+        font-size: 15px;
+    }
+
+    .active, .collapsible:hover {
+        background-color: #555;
+    }
+
+    .content {
+        padding: 0 18px;
+        display: none;
+        overflow: hidden;
+        background-color: #f1f1f1;
+    }
+</style>
 <body>
-"""
+""" % os.path.basename(summary["header"]["source-path"])
 
 html_footer = """
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+        coll[i].style.display = "block";
+        coll[i].nextElementSibling.style.display = "none";
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        });
+    }
+
+    var expand_button = document.getElementsByClassName("expand-button")[0];
+    var collapse_button = document.getElementsByClassName("collapse-button")[0];
+    expand_button.addEventListener("click", function() {
+        var coll = document.getElementsByClassName("collapsible");
+        for (var i = 0; i < coll.length; i++) {
+            coll[i].nextElementSibling.style.display = "block";
+        }
+    });
+    collapse_button.addEventListener("click", function() {
+        var coll = document.getElementsByClassName("collapsible");
+        for (var i = 0; i < coll.length; i++) {
+            coll[i].nextElementSibling.style.display = "none";
+        }
+    });
+</script>
 </body>
 </html>
 """
@@ -130,21 +190,31 @@ html += "</table>\n"
 html += "<hr>\n"
 
 for (frame_number, enqueueds) in frame_enqueued.items():
-    html += "frame %d<br>\n" % (frame_number)
-    html += '<div style="text-indent:1em;margin:0">\n'
+    html += '<button type="button" class="collapsible">frame %d</button>\n' % (frame_number)
+    html += '<table>\n'
     for enqueued in enqueueds:
-        html += "<p>%s</p>\n" % enqueued["name"]
+        html += '<tr><td>\n'
         if enqueued["name"] == "vkQueueSubmit":
-            html += '<div style="text-indent:2em;margin:0">\n'
+            html += '<button type="button" class="collapsible">%s (%d submissions)</button>\n' % (enqueued["name"], len(enqueued["args"]["pSubmits"]))
+            html += '<table>\n'
             for submit in enqueued["args"]["pSubmits"]:
+                html += '<tr><td>\n'
                 for commandbufferID in submit["pCommandBuffers"]:
-                    html += "<p>Command buffer %s</p>\n" % commandbufferID
-                    html += '<div style="text-indent:3em;margin:0">\n'
+                    html += '<button type="button" class="collapsible">Command buffer %s</button>\n' % commandbufferID
+                    html += '<table>\n'
                     for command in enqueued["command_buffer_contents"][commandbufferID]:
+                        html += '<tr><td>'
                         name = command["name"]
-                        html += "<p>%s</p>\n" % name
-                html += '</div>\n'
-            html += '</div>\n'
-    html += '</div>\n'
+                        html += "%s\n" % name
+                        html += '</td></tr>\n'
+                    html += '</table>\n'
+                html += '</td></tr>\n'
+            html += '</table>\n'
+        else:
+            # script doesn't have special processing for whatever this is
+            # html += '<button type="button" class="collapsible">%s</button>\n' % enqueued["name"]
+            html += '<p>%s</p>\n' % enqueued["name"]
+        html += '</td></tr>\n'
+    html += '</table>\n'
 
 print(html_header + html + html_footer)

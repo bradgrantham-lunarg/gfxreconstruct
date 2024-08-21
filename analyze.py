@@ -117,6 +117,7 @@ html_header = """
         cursor: pointer;
         padding: 18px;
         blarg-width: 40%%;
+        indent: 1em;
         border: none;
         text-align: left;
         outline: none;
@@ -189,6 +190,23 @@ if summary["tool"]:
 html += "</table>\n"
 html += "<hr>\n"
 
+def json_to_nested_tables(j):
+    h = "<table>\n"
+    if isinstance(j, dict):
+        for (key, value) in j.items():
+            h += "<tr><td>%s</td><td>\n" % key
+            h += json_to_nested_tables(value)
+            h += "</td></tr>\n"
+    elif isinstance(j, list):
+        for value in j:
+            h += "<tr><td>\n"
+            h += json_to_nested_tables(value)
+            h += "</td></tr>\n"
+    else:
+        h += "<tr><td>%s</td></tr>\n" % j
+    h += "</table>\n"
+    return h
+
 for (frame_number, enqueueds) in frame_enqueued.items():
     html += '<button type="button" class="collapsible">frame %d</button>\n' % (frame_number)
     html += '<table>\n'
@@ -205,7 +223,8 @@ for (frame_number, enqueueds) in frame_enqueued.items():
                     for command in enqueued["command_buffer_contents"][commandbufferID]:
                         html += '<tr><td>'
                         name = command["name"]
-                        html += "%s\n" % name
+                        html += '<button type="button" class="collapsible">%s</button>\n' % name
+                        html += json_to_nested_tables(command["args"])
                         html += '</td></tr>\n'
                     html += '</table>\n'
                 html += '</td></tr>\n'

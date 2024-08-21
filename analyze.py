@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+# make pretty - collapsible button, width of fields, vertical spacing especially within nested JSON tables, font, indentation
+# collect all other functions but collapse between QueueSubmit and QueuePresent
+# try more sophisticated captures - QueueSubmit2
+# try linking to RT pipeline - second pane? can back button do the right thing inside a pane?
+#     should command buffer in QS show current CB contents in second pane?
+# add screenshot thumbnails if they are found
+# embed a threeJS for Draw commands, first vertex buffer component = pos (requires save-binaries)
+
 import math
 import json
 import sys
@@ -9,8 +17,9 @@ import os
 commandbuffers = {}
 
 frame = 0 # GFXR's frame number minus 1
-# This is a list of lists of vkCmd functions
-frame_enqueued = {}
+
+# This is a list of lists of frame functions
+frame_functions = {}
 
 functions_not_handled = set()
 
@@ -82,7 +91,7 @@ for line in sys.stdin:
                                 commands.append(command)
                             command_buffers[commandbufferID] = commands
                     function["command_buffer_contents"] = command_buffers
-                    frame_enqueued.setdefault(frame_number, []).append(function)
+                    frame_functions.setdefault(frame_number, []).append(function)
                 except:
                     print(s)
                     raise
@@ -93,11 +102,11 @@ for line in sys.stdin:
                         # commandbufferID = i["commandBuffer"]
                         # commandbuffer = commandbuffers[commandbufferID]
                         # copy = {"command": name, "allocation" : commandbuffer["allocation"], "handleid" : commandbuffer["handleid"], "commands" : commandbuffer["commands"]}
-                    # frame_enqueued.setdefault(frame_number, []).append(copy)
+                    # frame_functions.setdefault(frame_number, []).append(copy)
 
             elif name == "vkQueuePresentKHR":
                 copy = {"command": "QueuePresent", "args": args}
-                frame_enqueued.setdefault(frame_number, []).append(function)
+                frame_functions.setdefault(frame_number, []).append(function)
 
             else:
                 functions_not_handled.add(name)
@@ -207,18 +216,22 @@ def json_to_nested_tables(j):
     h += "</table>\n"
     return h
 
-for (frame_number, enqueueds) in frame_enqueued.items():
-    html += '<button type="button" class="collapsible">frame %d (%d enqueues)</button>\n' % (frame_number, len(enqueueds))
+print(html_header)
+print(html)
+
+for (frame_number, functions) in frame_functions.items():
+    html = ""
+    html += '<button type="button" class="collapsible">frame %d (%d enqueues)</button>\n' % (frame_number, len(functions))
     html += '<table>\n'
-    for enqueued in enqueueds:
+    for function in functions:
         html += '<tr><td>\n'
-        if enqueued["name"] == "vkQueueSubmit":
-            if len(enqueued["args"]["pSubmits"]) == 1 and len(enqueued["args"]["pSubmits"][0]["pCommandBuffers"]) == 1:
-                submit = enqueued["args"]["pSubmits"][0]
+        if function["name"] == "vkQueueSubmit":
+            if len(function["args"]["pSubmits"]) == 1 and len(function["args"]["pSubmits"][0]["pCommandBuffers"]) == 1:
+                submit = function["args"]["pSubmits"][0]
                 commandbufferID = submit["pCommandBuffers"][0]
-                html += '<button type="button" class="collapsible">%s (1 submission, command buffer %s)</button>\n' % (enqueued["name"], commandbufferID)
+                html += '<button type="button" class="collapsible">%s (1 submission, command buffer %s)</button>\n' % (function["name"], commandbufferID)
                 html += '<table>\n'
-                for command in enqueued["command_buffer_contents"][commandbufferID]:
+                for command in function["command_buffer_contents"][commandbufferID]:
                     html += '<tr><td>'
                     name = command["name"]
                     html += '<button type="button" class="collapsible">%s</button>\n' % name
@@ -226,14 +239,14 @@ for (frame_number, enqueueds) in frame_enqueued.items():
                     html += '</td></tr>\n'
                 html += '</table>\n'
             else:
-                html += '<button type="button" class="collapsible">%s (%d submissions)</button>\n' % (enqueued["name"], len(enqueued["args"]["pSubmits"]))
+                html += '<button type="button" class="collapsible">%s (%d submissions)</button>\n' % (function["name"], len(function["args"]["pSubmits"]))
                 html += '<table>\n'
-                for submit in enqueued["args"]["pSubmits"]:
+                for submit in function["args"]["pSubmits"]:
                     html += '<tr><td>\n'
                     for commandbufferID in submit["pCommandBuffers"]:
                         html += '<button type="button" class="collapsible">Command buffer %s</button>\n' % commandbufferID
                         html += '<table>\n'
-                        for command in enqueued["command_buffer_contents"][commandbufferID]:
+                        for command in function["command_buffer_contents"][commandbufferID]:
                             html += '<tr><td>'
                             name = command["name"]
                             html += '<button type="button" class="collapsible">%s</button>\n' % name
@@ -244,9 +257,11 @@ for (frame_number, enqueueds) in frame_enqueued.items():
                 html += '</table>\n'
         else:
             # script doesn't have special processing for whatever this is
-            html += '<button type="button" class="collapsible">%s</button>\n' % enqueued["name"]
+            html += '<button type="button" class="collapsible">%s</button>\n' % function["name"]
             html += json_to_nested_tables(command["args"])
         html += '</td></tr>\n'
     html += '</table>\n'
+    print(html)
+    html = ""
 
-print(html_header + html + html_footer)
+print(html_footer)

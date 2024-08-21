@@ -208,31 +208,44 @@ def json_to_nested_tables(j):
     return h
 
 for (frame_number, enqueueds) in frame_enqueued.items():
-    html += '<button type="button" class="collapsible">frame %d</button>\n' % (frame_number)
+    html += '<button type="button" class="collapsible">frame %d (%d enqueues)</button>\n' % (frame_number, len(enqueueds))
     html += '<table>\n'
     for enqueued in enqueueds:
         html += '<tr><td>\n'
         if enqueued["name"] == "vkQueueSubmit":
-            html += '<button type="button" class="collapsible">%s (%d submissions)</button>\n' % (enqueued["name"], len(enqueued["args"]["pSubmits"]))
-            html += '<table>\n'
-            for submit in enqueued["args"]["pSubmits"]:
-                html += '<tr><td>\n'
-                for commandbufferID in submit["pCommandBuffers"]:
-                    html += '<button type="button" class="collapsible">Command buffer %s</button>\n' % commandbufferID
-                    html += '<table>\n'
-                    for command in enqueued["command_buffer_contents"][commandbufferID]:
-                        html += '<tr><td>'
-                        name = command["name"]
-                        html += '<button type="button" class="collapsible">%s</button>\n' % name
-                        html += json_to_nested_tables(command["args"])
-                        html += '</td></tr>\n'
-                    html += '</table>\n'
-                html += '</td></tr>\n'
-            html += '</table>\n'
+            if len(enqueued["args"]["pSubmits"]) == 1 and len(enqueued["args"]["pSubmits"][0]["pCommandBuffers"]) == 1:
+                submit = enqueued["args"]["pSubmits"][0]
+                commandbufferID = submit["pCommandBuffers"][0]
+                html += '<button type="button" class="collapsible">%s (1 submission, command buffer %s)</button>\n' % (enqueued["name"], commandbufferID)
+                html += '<table>\n'
+                for command in enqueued["command_buffer_contents"][commandbufferID]:
+                    html += '<tr><td>'
+                    name = command["name"]
+                    html += '<button type="button" class="collapsible">%s</button>\n' % name
+                    html += json_to_nested_tables(command["args"])
+                    html += '</td></tr>\n'
+                html += '</table>\n'
+            else:
+                html += '<button type="button" class="collapsible">%s (%d submissions)</button>\n' % (enqueued["name"], len(enqueued["args"]["pSubmits"]))
+                html += '<table>\n'
+                for submit in enqueued["args"]["pSubmits"]:
+                    html += '<tr><td>\n'
+                    for commandbufferID in submit["pCommandBuffers"]:
+                        html += '<button type="button" class="collapsible">Command buffer %s</button>\n' % commandbufferID
+                        html += '<table>\n'
+                        for command in enqueued["command_buffer_contents"][commandbufferID]:
+                            html += '<tr><td>'
+                            name = command["name"]
+                            html += '<button type="button" class="collapsible">%s</button>\n' % name
+                            html += json_to_nested_tables(command["args"])
+                            html += '</td></tr>\n'
+                        html += '</table>\n'
+                    html += '</td></tr>\n'
+                html += '</table>\n'
         else:
             # script doesn't have special processing for whatever this is
-            # html += '<button type="button" class="collapsible">%s</button>\n' % enqueued["name"]
-            html += '<p>%s</p>\n' % enqueued["name"]
+            html += '<button type="button" class="collapsible">%s</button>\n' % enqueued["name"]
+            html += json_to_nested_tables(command["args"])
         html += '</td></tr>\n'
     html += '</table>\n'
 

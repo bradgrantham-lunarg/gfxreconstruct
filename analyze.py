@@ -120,13 +120,22 @@ html_header = """
 <title>Capture Analysis for %s</title>
 
 <style>
+    .jsonkey {
+        vertical-align:top;
+    }
+
+    .jsonval {
+        vertical-align:top;
+    }
+
     .collapsible {
-        background-color: #777;
-        color: white;
-        cursor: pointer;
-        padding: 18px;
+        blarg-background-color: #777;
+        background-color: #FFF;
+        blarg-color: white;
+        blarg-cursor: pointer;
+        blarg-padding: 18px;
+        padding: 2px;
         blarg-width: 40%%;
-        indent: 1em;
         border: none;
         text-align: left;
         outline: none;
@@ -134,14 +143,27 @@ html_header = """
     }
 
     .active, .collapsible:hover {
-        background-color: #555;
+        blarg-background-color: #555;
     }
 
     .content {
         padding: 0 18px;
         display: none;
         overflow: hidden;
-        background-color: #f1f1f1;
+        blarg-background-color: #f1f1f1;
+    }
+
+    .collapsible:before {
+        content: '+';
+        width: 1em;
+        blarg-font-size: 20px;
+        blarg-color: white;
+        float: left;
+        margin-left: 5px;
+    }
+
+    .active:before {
+        content: '-';
     }
 </style>
 <body>
@@ -185,11 +207,48 @@ html_footer = """
 </html>
 """
 
+def start_indent():
+    return '<table><tr><td style="width:30px;"></td><td>\n'
+
+def end_indent():
+    return '</td></tr></table>\n'
+
+def json_to_nested_tables(j):
+    h = "<table>\n"
+    if isinstance(j, dict):
+        for (key, value) in j.items():
+            h += '<tr><td class="jsonkey">%s</td><td class="jsonval">\n' % key
+            h += json_to_nested_tables(value)
+            h += "</td></tr>\n"
+    elif isinstance(j, list):
+        for value in j:
+            h += '<tr><td class="jsonval">\n'
+            h += json_to_nested_tables(value)
+            h += "</td></tr>\n"
+    else:
+        h += '<tr><td class="jsonval">%s</td></tr>\n' % j
+    h += "</table>\n"
+    return h
+
+def commandbuffer_to_html(function, commandbufferID):
+    h = "<table>"
+    for command in function["command_buffer_contents"][commandbufferID]:
+        name = command["name"]
+        h += '<tr><td>'
+        h += '<button type="button" class="collapsible">%s</button>\n' % name
+        h += start_indent()
+        h += json_to_nested_tables(command["args"])
+        h += end_indent()
+        h += '</td></tr>\n'
+    h += "</table>"
+    return h
+
 html = ""
 
 html += "<em>Summary</em><br>\n"
+html += start_indent()
 html += "<table>\n"
-html += "<tr><td>File</td><td>%s</td></tr>\n" % summary["header"]["source-path"]
+html += '<tr><td style="margin-right: 1em;">File</td><td>%s</td></tr>\n' % summary["header"]["source-path"]
 if summary["ExeFileInfo"]:
     html += "<tr><td>Executable filename</td><td>%s</td></tr>\n" % summary["ExeFileInfo"]["app_name"]
 if summary["tool"]:
@@ -197,24 +256,8 @@ if summary["tool"]:
     html += "<tr><td>Using GFXR</td><td>%s</td></tr>\n" % summary["tool"]["gfxrecon-version"]
     html += "<tr><td>On Vulkan</td><td>%s</td></tr>\n" % summary["tool"]["vulkan-version"]
 html += "</table>\n"
+html += end_indent()
 html += "<hr>\n"
-
-def json_to_nested_tables(j):
-    h = "<table>\n"
-    if isinstance(j, dict):
-        for (key, value) in j.items():
-            h += "<tr><td>%s</td><td>\n" % key
-            h += json_to_nested_tables(value)
-            h += "</td></tr>\n"
-    elif isinstance(j, list):
-        for value in j:
-            h += "<tr><td>\n"
-            h += json_to_nested_tables(value)
-            h += "</td></tr>\n"
-    else:
-        h += "<tr><td>%s</td></tr>\n" % j
-    h += "</table>\n"
-    return h
 
 print(html_header)
 print(html)
@@ -222,7 +265,8 @@ print(html)
 for (frame_number, functions) in frame_functions.items():
     html = ""
     html += '<button type="button" class="collapsible">frame %d (%d enqueues)</button>\n' % (frame_number, len(functions))
-    html += '<table>\n'
+    html += start_indent()
+    html += "<table>"
     for function in functions:
         html += '<tr><td>\n'
         if function["name"] == "vkQueueSubmit":
@@ -230,37 +274,32 @@ for (frame_number, functions) in frame_functions.items():
                 submit = function["args"]["pSubmits"][0]
                 commandbufferID = submit["pCommandBuffers"][0]
                 html += '<button type="button" class="collapsible">%s (1 submission, command buffer %s)</button>\n' % (function["name"], commandbufferID)
-                html += '<table>\n'
-                for command in function["command_buffer_contents"][commandbufferID]:
-                    html += '<tr><td>'
-                    name = command["name"]
-                    html += '<button type="button" class="collapsible">%s</button>\n' % name
-                    html += json_to_nested_tables(command["args"])
-                    html += '</td></tr>\n'
-                html += '</table>\n'
+                html += start_indent()
+                html += commandbuffer_to_html(function, commandbufferID)
+                html += end_indent()
             else:
                 html += '<button type="button" class="collapsible">%s (%d submissions)</button>\n' % (function["name"], len(function["args"]["pSubmits"]))
-                html += '<table>\n'
+                html += start_indent()
+                html += "<table>"
                 for submit in function["args"]["pSubmits"]:
                     html += '<tr><td>\n'
                     for commandbufferID in submit["pCommandBuffers"]:
                         html += '<button type="button" class="collapsible">Command buffer %s</button>\n' % commandbufferID
-                        html += '<table>\n'
-                        for command in function["command_buffer_contents"][commandbufferID]:
-                            html += '<tr><td>'
-                            name = command["name"]
-                            html += '<button type="button" class="collapsible">%s</button>\n' % name
-                            html += json_to_nested_tables(command["args"])
-                            html += '</td></tr>\n'
-                        html += '</table>\n'
+                        html += start_indent()
+                        html += commandbuffer_to_html(function, commandbufferID)
+                        html += end_indent()
                     html += '</td></tr>\n'
-                html += '</table>\n'
+                html += "</table>"
+                html += end_indent()
         else:
             # script doesn't have special processing for whatever this is
             html += '<button type="button" class="collapsible">%s</button>\n' % function["name"]
+            html += start_indent()
             html += json_to_nested_tables(command["args"])
+            html += end_indent()
         html += '</td></tr>\n'
-    html += '</table>\n'
+    html += "</table>"
+    html += end_indent()
     print(html)
     html = ""
 

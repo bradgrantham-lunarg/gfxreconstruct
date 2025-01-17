@@ -244,8 +244,10 @@ void FieldToJson(nlohmann::ordered_json& jdata, const Decoded_VkWriteDescriptorS
         FieldToJson(jdata["descriptorType"], decoded_value.descriptorType, options);
         switch (decoded_value.descriptorType)
         {
-            case VK_DESCRIPTOR_TYPE_SAMPLER:
             case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+                FieldToJson(jdata["pImageInfo"], meta_struct.pImageInfo, options);
+                break;
+            case VK_DESCRIPTOR_TYPE_SAMPLER:
             case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
             case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
             case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:

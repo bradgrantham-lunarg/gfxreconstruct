@@ -1433,6 +1433,7 @@ void VulkanReplayConsumer::Process_vkEndCommandBuffer(
 {
     VkCommandBuffer in_commandBuffer = MapHandle<VulkanCommandBufferInfo>(commandBuffer, &CommonObjectInfoTable::GetVkCommandBufferInfo);
 
+    GFXRECON_LOG_INFO("EndCommandBuffer %p", in_commandBuffer);
     VkResult replay_result = GetDeviceTable(in_commandBuffer)->EndCommandBuffer(in_commandBuffer);
     CheckResult("vkEndCommandBuffer", returnValue, replay_result, call_info);
 
@@ -1802,6 +1803,7 @@ void VulkanReplayConsumer::Process_vkCmdCopyBuffer(
     VkBuffer in_dstBuffer = MapHandle<VulkanBufferInfo>(dstBuffer, &CommonObjectInfoTable::GetVkBufferInfo);
     const VkBufferCopy* in_pRegions = pRegions->GetPointer();
 
+    GFXRECON_LOG_INFO("CmdCopyBuffer %p %p %p", in_commandBuffer, in_srcBuffer, in_dstBuffer);
     GetDeviceTable(in_commandBuffer)->CmdCopyBuffer(in_commandBuffer, in_srcBuffer, in_dstBuffer, regionCount, in_pRegions);
 
     if (options_.dumping_resources)
@@ -3103,6 +3105,7 @@ void VulkanReplayConsumer::Process_vkCmdCopyBuffer2(
     const VkCopyBufferInfo2* in_pCopyBufferInfo = pCopyBufferInfo->GetPointer();
     MapStructHandles(pCopyBufferInfo->GetMetaStructPointer(), GetObjectInfoTable());
 
+    GFXRECON_LOG_INFO("CmdCopyBuffer2 %p %p %p", in_commandBuffer, in_pCopyBufferInfo->srcBuffer, in_pCopyBufferInfo->dstBuffer);
     GetDeviceTable(in_commandBuffer)->CmdCopyBuffer2(in_commandBuffer, in_pCopyBufferInfo);
 
     if (options_.dumping_resources)
@@ -3137,6 +3140,7 @@ void VulkanReplayConsumer::Process_vkCmdCopyBufferToImage2(
     const VkCopyBufferToImageInfo2* in_pCopyBufferToImageInfo = pCopyBufferToImageInfo->GetPointer();
     MapStructHandles(pCopyBufferToImageInfo->GetMetaStructPointer(), GetObjectInfoTable());
 
+    GFXRECON_LOG_INFO("CmdCopyBufferToImage2 %p %p %p", in_commandBuffer, in_pCopyBufferToImageInfo->srcBuffer, in_pCopyBufferToImageInfo->dstImage);
     GetDeviceTable(in_commandBuffer)->CmdCopyBufferToImage2(in_commandBuffer, in_pCopyBufferToImageInfo);
 
     if (options_.dumping_resources)

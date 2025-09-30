@@ -1457,7 +1457,12 @@ bool FileProcessor::ProcessMetaData(const format::BlockHeader& block_header, for
 
         if (success)
         {
-            for (auto decoder : decoders_)
+            if(1)GFXRECON_LOG_INFO("set opaque address ignored for %llu %llu %llu %llu",
+                   header.thread_id,
+                   header.device_id,
+                   header.object_id,
+                   header.address)
+            if(0) for (auto decoder : decoders_)
             {
                 if (decoder->SupportsMetaDataId(meta_data_id))
                 {

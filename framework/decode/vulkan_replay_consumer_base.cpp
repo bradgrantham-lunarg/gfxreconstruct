@@ -4020,6 +4020,27 @@ VkResult VulkanReplayConsumerBase::OverrideQueueSubmit(PFN_vkQueueSubmit        
         }
     }
 
+    std::string str = "[";
+    char        handle_str[32];
+    for(int i = 0; i < submitCount; i++) {
+        auto cb_count = submit_infos[i].commandBufferCount;
+        auto cbs = submit_infos[i].pCommandBuffers;
+        str += "[";
+        for(int j = 0; j < cb_count; j++) {
+            sprintf(handle_str, "%p", cbs[j]);
+            str += handle_str;
+            if(j < cb_count - 1) {
+                str += ", ";
+            }
+        }
+        str += "[";
+        if(i < submitCount - 1) {
+            str += " ";
+        }
+    }
+    str += "]";
+    GFXRECON_LOG_INFO("QueueSubmit %s", str.c_str());
+
     // Only attempt to filter imported semaphores if we know at least one has been imported.
     // If rendering is restricted to a specific surface, shadow semaphore and forward progress state will need to be
     // tracked.
@@ -4255,6 +4276,26 @@ VkResult VulkanReplayConsumerBase::OverrideQueueSubmit2(PFN_vkQueueSubmit2      
             }
         }
     }
+    std::string str = "[";
+    char        handle_str[32];
+    for(int i = 0; i < submitCount; i++) {
+        auto cb_count = submit_infos[i].commandBufferInfoCount;
+        auto cbs = submit_infos[i].pCommandBufferInfos;
+        str += "[";
+        for(int j = 0; j < cb_count; j++) {
+            sprintf(handle_str, "%p",cbs[j].commandBuffer);
+            str += handle_str;
+            if(j < cb_count - 1) {
+                str += ", ";
+            }
+        }
+        str += "]";
+        if(i < submitCount - 1) {
+            str += " ";
+        }
+    }
+    str += "]";
+    GFXRECON_LOG_INFO("QueueSubmit2 %s", str.c_str());
     // Only attempt to filter imported semaphores if we know at least one has been imported.
     // If rendering is restricted to a specific surface, shadow semaphore and forward progress state will need to be
     // tracked.
@@ -5103,6 +5144,19 @@ void VulkanReplayConsumerBase::OverrideCmdExecuteCommands(PFN_vkCmdExecuteComman
                                                           secondary_cmd_buffer_info->addresses_to_replace.end());
         }
     }
+    std::string str = "[";
+    char        handle_str[32];
+    for(int j = 0; j < commandBufferCount; j++) {
+        sprintf(handle_str, "%p", command_buffers[j]);
+        str += handle_str;
+        if (j < commandBufferCount - 1)
+        {
+            str += ", ";
+        }
+    }
+    str += "]";
+    GFXRECON_LOG_INFO("CmdExecuteCommands %p %s", command_buffer, str.c_str());
+
     func(command_buffer, commandBufferCount, command_buffers);
 }
 
@@ -5165,6 +5219,19 @@ void VulkanReplayConsumerBase::OverrideFreeCommandBuffers(PFN_vkFreeCommandBuffe
         }
     }
     const VkCommandBuffer* in_pCommandBuffers = pCommandBuffers->GetHandlePointer();
+    std::string str = "[";
+    char        handle_str[32];
+    for(int j = 0; j < command_buffer_count; j++) {
+        sprintf(handle_str, "%p", in_pCommandBuffers[j]);
+        str += handle_str;
+        if (j < command_buffer_count - 1)
+        {
+            str += ", ";
+        }
+    }
+    str += "]";
+    GFXRECON_LOG_INFO("FreeCommandBuffers %s", str.c_str());
+
     func(device_info->handle, command_pool_info->handle, command_buffer_count, in_pCommandBuffers);
 }
 
@@ -5918,6 +5985,7 @@ VulkanReplayConsumerBase::OverrideCreateBuffer(PFN_vkCreateBuffer               
         result = allocator->CreateBuffer(
             &modified_create_info, GetAllocationCallbacks(pAllocator), capture_id, replay_buffer, &allocator_data);
     }
+    GFXRECON_LOG_INFO("CreateBuffer %p", *replay_buffer);
 
     if ((result == VK_SUCCESS) && (replay_create_info != nullptr) && ((*replay_buffer) != VK_NULL_HANDLE))
     {
@@ -5992,6 +6060,7 @@ void VulkanReplayConsumerBase::OverrideDestroyBuffer(
         buffer_info->allocator_data = 0;
     }
 
+    GFXRECON_LOG_INFO("DestroyBuffer %llu %p", buffer_info->capture_id, buffer);
     allocator->DestroyBuffer(buffer, GetAllocationCallbacks(pAllocator), allocator_data);
 
     // free potential shadow-resources associated with this buffer
@@ -9554,6 +9623,8 @@ VkResult VulkanReplayConsumerBase::OverrideBeginCommandBuffer(
     VkCommandBuffer                 command_buffer = command_buffer_info->handle;
     const VkCommandBufferBeginInfo* begin_info     = begin_info_decoder->GetPointer();
 
+    GFXRECON_LOG_INFO("BeginCommandBuffer %llu %p", command_buffer_info->capture_id, command_buffer);
+
     if (begin_info->pInheritanceInfo != nullptr)
     {
         command_buffer_info->inside_renderpass = begin_info->pInheritanceInfo->renderPass != VK_NULL_HANDLE;
@@ -9585,6 +9656,7 @@ VkResult VulkanReplayConsumerBase::OverrideResetCommandBuffer(PFN_vkResetCommand
 
     VkCommandBuffer command_buffer = command_buffer_info->handle;
 
+    GFXRECON_LOG_INFO("ResetCommandBuffer %llu/%p", command_buffer_info->capture_id, command_buffer);
     if (options_.dumping_resources)
     {
         resource_dumper_->ResetCommandBuffer((command_buffer));

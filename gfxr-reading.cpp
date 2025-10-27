@@ -1,4 +1,5 @@
 #include <string>
+#include <cstring>
 #include <vector>
 #include <map>
 #include <set>
@@ -1461,9 +1462,15 @@ void WriteReasonableGFXRHeader(FILE *fp, uint32_t compression_type)
 
 int main(int argc, char **argv)
 {
+    bool debug = false;
     using namespace gfxrecon::format;
 
-    assert(argc == 2);
+    assert(argc >= 2);
+    if(strcmp("--debug", argv[1]) == 0) {
+        debug = true;
+        argv++;
+        argc--;
+    }
     const char *input_filename = argv[1];
     FILE *input_file = fopen(input_filename, "rb");
     uint32_t compression_type = 0;
@@ -1488,8 +1495,6 @@ int main(int argc, char **argv)
         }
     }
 
-    // FILE *output = fopen(argv[2], "rb");
-
     static time_t then = time(0);
     int block = 0;
     bool in_setup = false;
@@ -1505,10 +1510,10 @@ int main(int argc, char **argv)
 
             }
         }
+        size_t where = ftell(input_file);
 
         uint64_t size;
         uint32_t type;
-        printf("at %zd\n", ftell(input_file));
 
         if(fread(&size, sizeof(size), 1, input_file) != 1)
         {
@@ -1522,12 +1527,23 @@ int main(int argc, char **argv)
             exit(1);
         }
 
-        Blob blob(size + sizeof(BlockHeader));
-
         bool is_compressed = type & kCompressedBlockTypeBit;
         uint32_t base_type = RemoveCompressedBlockType(type);
 
-        printf("block %d is %" PRIu64 " bytes of base type %d, type %s\n", block, size, base_type, BlockTypeToName.at(static_cast<BlockType>(type)).c_str());
+        if(debug)
+        {
+            printf("block %d at %zd is %" PRIu64 " bytes of base type %d, type %s\n", block, where, size, base_type, BlockTypeToName.at(static_cast<BlockType>(type)).c_str());
+        }
+
+        if(size > 16000ULL * 1000ULL * 1000ULL)
+        {
+            printf("Probable block read error, size is %zd\n", size); 
+            exit(1);
+
+        }
+
+        Blob blob(size + sizeof(BlockHeader));
+
         *(uint64_t*)blob.data() = size;
         *(uint32_t*)(blob.data() + 8) = type;
 
@@ -1541,39 +1557,41 @@ int main(int argc, char **argv)
             }
             const auto& meta = *(MetaDataHeader*)blob.data();
             try {
-                printf("    meta %d, %s\n", GetMetaDataType(meta.meta_data_id), MetaDataTypeToName.at(GetMetaDataType(meta.meta_data_id)).c_str());
+                printf("block %d at %zd is %" PRIu64 " bytes of %s\n", block, where, size, MetaDataTypeToName.at(GetMetaDataType(meta.meta_data_id)).c_str());
             } catch (const std::out_of_range& e) {
                 fprintf(stderr, "Failed to look up meta data ID %d. %s\n", GetMetaDataType(meta.meta_data_id), e.what());
                 throw;
             }
             if(GetMetaDataType(meta.meta_data_id) == kFillMemoryCommand)
             {
-                const auto& fill_memory = *(FillMemoryCommandHeader*)blob.data();
                 size_t remaining_fill_memory_header = sizeof(FillMemoryCommandHeader) - sizeof(MetaDataHeader);
                 if(fread(blob.data() + sizeof(MetaDataHeader), 1, remaining_fill_memory_header, input_file) != remaining_fill_memory_header)
                 {
                     printf("failed to read rest of fillmemory header %d from %s\n", block, input_filename);
                     exit(1);
                 }
+                const auto& fill_memory = *(FillMemoryCommandHeader*)blob.data();
+                size_t fill_memory_payload_size = size - sizeof(FillMemoryCommandHeader);
                 if(is_compressed) {
-                    size_t memory_size = size
-                    std::vector<uint8_t> blob(fill_memory.memory_size);
-                    if(fread(blob.data(), 1, fill_memory.memory_size, input_file) != fill_memory.memory_size)
+                    std::vector<uint8_t> compressed(fill_memory_payload_size);
+                    if(fread(compressed.data(), 1, compressed.size(), input_file) != compressed.size())
                     {
-                        printf("failed to read %zd bytes for block %d\n", fill_memory.memory_size, block);
+                        printf("failed to read %zd bytes for block %d\n", compressed.size(), block);
                         exit(1);
                     }
-                    else
+
+#if 0
                     {
                         char fname[512];
-                        sprintf(fname, "block-%d.lz4", block);
+                        sprintf(fname, "block-%d-%zd-bytes.lz4", block, fill_memory.memory_size);
                         FILE* fp = fopen(fname, "wb");
-                        fwrite(blob.data(), 1, blob.size(), fp);
+                        fwrite(compressed.data(), 1, compressed.size(), fp);
                         fclose(fp);
-                        printf("wrote %zd bytes for block %d to %s\n", blob.size(), block, fname);
+                        printf("wrote %zd bytes for block %d to %s\n", compressed.size(), block, fname);
                     }
+#endif
                 } else {
-                    if(fseek(input_file, fill_memory.memory_size, SEEK_CUR) != 0)
+                    if(fseek(input_file, fill_memory_payload_size, SEEK_CUR) != 0)
                     {
                         printf("failed to skip rest of fill memory block %d from %s\n", block, input_filename);
                         exit(1);
@@ -1589,13 +1607,15 @@ int main(int argc, char **argv)
         }
         else if(base_type == kStateMarkerBlock)
         {
-            size_t remaining = size - sizeof(BlockHeader);
-            if(fread(blob.data() + sizeof(BlockHeader), 1, remaining, input_file) != remaining)
+            size_t remaining_marker = sizeof(Marker) - sizeof(BlockHeader);
+            if(fread(blob.data() + sizeof(BlockHeader), 1, remaining_marker, input_file) != remaining_marker)
             {
                 printf("failed to read rest of marker block %d from %s\n", block, input_filename);
                 exit(1);
             }
             const Marker& marker = *(Marker*)blob.data();
+            const std::string markertype = (marker.marker_type == kBeginMarker) ? "begin" : "end";
+            printf("block %d at %zd is %" PRIu64 " bytes of marker %s, frame %" PRIu64 "\n", block, where, size, markertype.c_str(), marker.frame_number);
             if(marker.marker_type == kBeginMarker) {
                 in_setup = true;
             } else if(marker.marker_type == kEndMarker) {

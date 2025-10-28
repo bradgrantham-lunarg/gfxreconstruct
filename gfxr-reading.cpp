@@ -1496,7 +1496,7 @@ int main(int argc, char **argv)
     }
 
     static time_t then = time(0);
-    int block = 0;
+    int block_index = 0;
     bool in_setup = false;
     while(!feof(input_file))
     {
@@ -1505,7 +1505,7 @@ int main(int argc, char **argv)
             time_t now = time(0);
             if(now != then)
             {
-                printf("Block %d, %ld Gbytes\n", block, ftell(input_file) / 1000000000);
+                printf("Block %d, %ld Gbytes\n", block_index, ftell(input_file) / 1000000000);
                 then = now;
 
             }
@@ -1517,13 +1517,13 @@ int main(int argc, char **argv)
 
         if(fread(&size, sizeof(size), 1, input_file) != 1)
         {
-            printf("failed to read block %d size from %s, assuming end\n", block, input_filename);
+            printf("failed to read block %d size from %s, assuming end\n", block_index, input_filename);
             break;
         }
 
         if(fread(&type, sizeof(type), 1, input_file) != 1)
         {
-            printf("failed to read block %d type from %s\n", block, input_filename);
+            printf("failed to read block %d type from %s\n", block_index, input_filename);
             exit(1);
         }
 
@@ -1532,7 +1532,7 @@ int main(int argc, char **argv)
 
         if(debug)
         {
-            printf("block %d at %zd is %" PRIu64 " bytes of base type %d, type %s\n", block, where, size, base_type, BlockTypeToName.at(static_cast<BlockType>(type)).c_str());
+            printf("block %d at %zd is %" PRIu64 " bytes of base type %d, type %s\n", block_index, where, size, base_type, BlockTypeToName.at(static_cast<BlockType>(type)).c_str());
         }
 
         if(size > 16000ULL * 1000ULL * 1000ULL)
@@ -1542,112 +1542,88 @@ int main(int argc, char **argv)
 
         }
 
-        Blob blob(size + sizeof(BlockHeader));
+        Blob block(size + sizeof(BlockHeader));
 
-        *(uint64_t*)blob.data() = size;
-        *(uint32_t*)(blob.data() + 8) = type;
+        *(uint64_t*)block.data() = size;
+        *(uint32_t*)(block.data() + 8) = type;
+
+        if(fread(block.data() + sizeof(BlockHeader), 1, size, input_file) != size)
+        {
+            printf("failed to read rest of block %d from %s\n", block_index, input_filename);
+            exit(1);
+        }
 
         if(base_type == kMetaDataBlock)
         {
-            size_t remaining_metadataheader = sizeof(MetaDataHeader) - sizeof(BlockHeader);
-            if(fread(blob.data() + sizeof(BlockHeader), 1, remaining_metadataheader, input_file) != remaining_metadataheader)
-            {
-                printf("failed to read rest of metadata header %d from %s\n", block, input_filename);
-                exit(1);
-            }
-            const auto& meta = *(MetaDataHeader*)blob.data();
+            const auto& meta = *(MetaDataHeader*)block.data();
+
             try {
-                printf("block %d at %zd is %" PRIu64 " bytes of %s\n", block, where, size, MetaDataTypeToName.at(GetMetaDataType(meta.meta_data_id)).c_str());
+                printf("block %d at %zd is %" PRIu64 " bytes of %s\n", block_index, where, size, MetaDataTypeToName.at(GetMetaDataType(meta.meta_data_id)).c_str());
             } catch (const std::out_of_range& e) {
                 fprintf(stderr, "Failed to look up meta data ID %d. %s\n", GetMetaDataType(meta.meta_data_id), e.what());
                 throw;
             }
+
             if(GetMetaDataType(meta.meta_data_id) == kFillMemoryCommand)
             {
-                size_t remaining_fill_memory_header = sizeof(FillMemoryCommandHeader) - sizeof(MetaDataHeader);
-                if(fread(blob.data() + sizeof(MetaDataHeader), 1, remaining_fill_memory_header, input_file) != remaining_fill_memory_header)
-                {
-                    printf("failed to read rest of fillmemory header %d from %s\n", block, input_filename);
-                    exit(1);
-                }
-                const auto& fill_memory = *(FillMemoryCommandHeader*)blob.data();
-                size_t fill_memory_payload_size = size - sizeof(FillMemoryCommandHeader);
-                if(is_compressed) {
-                    std::vector<uint8_t> compressed(fill_memory_payload_size);
-                    if(fread(compressed.data(), 1, compressed.size(), input_file) != compressed.size())
-                    {
-                        printf("failed to read %zd bytes for block %d\n", compressed.size(), block);
-                        exit(1);
-                    }
+                const auto& fill_memory = *(FillMemoryCommandHeader*)block.data();
 
-#if 0
-                    {
+                const uint8_t* payload = (uint8_t*)block.data() + sizeof(FillMemoryCommandHeader);
+                size_t payload_size = size - sizeof(FillMemoryCommandHeader);
+
+                if(is_compressed) {
+                    // do something with wcompressed fillmemory
+                    if(false) {
                         char fname[512];
-                        sprintf(fname, "block-%d-%zd-bytes.lz4", block, fill_memory.memory_size);
+                        sprintf(fname, "block-%d-%zd-bytes.lz4", block_index, fill_memory.memory_size);
                         FILE* fp = fopen(fname, "wb");
-                        fwrite(compressed.data(), 1, compressed.size(), fp);
+                        fwrite(payload, 1, payload_size, fp);
                         fclose(fp);
-                        printf("wrote %zd bytes for block %d to %s\n", compressed.size(), block, fname);
+                        printf("wrote %zd bytes for block %d to %s\n", payload_size, block_index, fname);
                     }
-#endif
                 } else {
-                    if(fseek(input_file, fill_memory_payload_size, SEEK_CUR) != 0)
-                    {
-                        printf("failed to skip rest of fill memory block %d from %s\n", block, input_filename);
-                        exit(1);
-                    }
+                    // Maybe do something with uncompressed fillmemory
                 }
             } else {
-                if(fseek(input_file, size - remaining_metadataheader, SEEK_CUR) != 0)
-                {
-                    printf("failed to skip rest of metadata block %d from %s\n", block, input_filename);
-                    exit(1);
-                }
+                // Maybe do something with other metadata block type
             }
         }
         else if(base_type == kStateMarkerBlock)
         {
-            size_t remaining_marker = sizeof(Marker) - sizeof(BlockHeader);
-            if(fread(blob.data() + sizeof(BlockHeader), 1, remaining_marker, input_file) != remaining_marker)
-            {
-                printf("failed to read rest of marker block %d from %s\n", block, input_filename);
-                exit(1);
-            }
-            const Marker& marker = *(Marker*)blob.data();
+            const auto& marker = *(Marker*)block.data();
+
             const std::string markertype = (marker.marker_type == kBeginMarker) ? "begin" : "end";
-            printf("block %d at %zd is %" PRIu64 " bytes of marker %s, frame %" PRIu64 "\n", block, where, size, markertype.c_str(), marker.frame_number);
+
+            printf("block %d at %zd is %" PRIu64 " bytes of state %s marker, frame %" PRIu64 "\n", block_index, where, size, markertype.c_str(), marker.frame_number);
+
             if(marker.marker_type == kBeginMarker) {
                 in_setup = true;
             } else if(marker.marker_type == kEndMarker) {
                 in_setup = false;
             }
+
+        }
+        else if(base_type == kFrameMarkerBlock)
+        {
+            const auto& marker = *(Marker*)block.data();
+
+            const std::string markertype = (marker.marker_type == kBeginMarker) ? "begin" : "end";
+
+            printf("block %d at %zd is %" PRIu64 " bytes of frame %s marker, frame %" PRIu64 "\n", block_index, where, size, markertype.c_str(), marker.frame_number);
+
         }
         else if(base_type == kFunctionCallBlock)
         {
-            size_t remaining_functioncall = sizeof(FunctionCallHeader) - sizeof(BlockHeader);
-            if(fread(blob.data() + sizeof(BlockHeader), 1, remaining_functioncall, input_file) != remaining_functioncall)
-            {
-                printf("failed to read rest of function call header %d from %s\n", block, input_filename);
-                exit(1);
-            }
-            const auto& func = *(FunctionCallHeader*)blob.data();
+            const auto& func = *(FunctionCallHeader*)block.data();
             // printf("    api call %X\n", func.api_call_id);
             // if(func.api_call_id == gfxrecon::format::ApiCall_vkCreateWin32SurfaceKHR)
-            if(fseek(input_file, size - remaining_functioncall, SEEK_CUR) != 0)
-            {
-                printf("failed to skip rest of function call block %d from %s\n", block, input_filename);
-                exit(1);
-            }
+            // Do something with function call block?
         }
         else
         {
-            if(fseek(input_file, size, SEEK_CUR) != 0)
-            {
-                printf("failed to skip rest of block %d from %s\n", block, input_filename);
-                exit(1);
-            }
+            // Do something with other block types?
         }
-        block++;
+        block_index++;
     }
 
     fclose(input_file);

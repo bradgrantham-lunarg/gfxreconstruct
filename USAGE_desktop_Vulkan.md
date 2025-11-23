@@ -634,6 +634,10 @@ gfxrecon-replay         [-h | --help] [--version] [--cpu-mask <binary-mask>] [--
                         [--pbi-all] [--pbis <index1,index2>]
                         [--pipeline-creation-jobs | --pcj <num_jobs>]
                         [--deduplicate-device]
+                        [--save-pipeline-cache <cache-file> ]
+                        [--load-pipeline-cache <cache-file>]
+                        [--add-new-pipeline-caches]
+                        [--quit-after-frame]
 
 
 Required arguments:

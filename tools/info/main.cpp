@@ -92,44 +92,6 @@ const char kUnrecognizedFormatString[] = "<unrecognized-format>";
 const int kDefaultIndent = 12;
 
 // Global variables defining where we should output results to
-static std::ofstream g_output_file;
-
-// Write the output where it needs to go
-void WriteOutput(const char* format_string, ...)
-{
-    va_list args_list;
-    va_start(args_list, format_string);
-
-    try
-    {
-        // We have to make a copy because the first call to std::vsnprintf adjusts
-        // the argument list.
-        va_list args_copy;
-        va_copy(args_copy, args_list);
-        // Determine how much space is needed in the new string
-        const int32_t sz = std::vsnprintf(nullptr, 0, format_string, args_list) + 1;
-        va_end(args_list);
-
-        // Create a result string and clear it with spaces and then copy the formatted
-        // string results into it.
-        std::string result_string(sz, ' ');
-        std::vsnprintf(&result_string.front(), sz, format_string, args_copy);
-        va_end(args_copy);
-        if (g_output_file.is_open())
-        {
-            g_output_file << result_string.c_str() << std::endl;
-        }
-        else
-        {
-            GFXRECON_WRITE_CONSOLE(result_string.c_str());
-        }
-    }
-    catch (...)
-    {
-        va_end(args_list);
-    }
-}
-
 struct ApiAgnosticStats
 {
     gfxrecon::format::CompressionType compression_type;
@@ -215,27 +177,27 @@ static void PrintUsage(const char* exe_name)
     {
         app_name.replace(0, dir_location + 1, "");
     }
-    WriteOutput("\n%s - Print statistics for a GFXReconstruct capture file.\n", app_name.c_str());
-    WriteOutput("Usage:");
-    WriteOutput("  %s [-h | --help] [--version] [--exe-info-only] [--verbose] [--output <file>] <capture-file>\n",
+    GFXRECON_WRITE_CONSOLE("\n%s - Print statistics for a GFXReconstruct capture file.\n", app_name.c_str());
+    GFXRECON_WRITE_CONSOLE("Usage:");
+    GFXRECON_WRITE_CONSOLE("  %s [-h | --help] [--version] [--exe-info-only] [--verbose] [--output <file>] <capture-file>\n",
                 app_name.c_str());
-    WriteOutput("Required arguments:");
-    WriteOutput("  <capture-file>\tThe GFXReconstruct capture file to be processed.");
-    WriteOutput("\nOptional arguments:");
-    WriteOutput("  -h\t\t\tPrint usage information and exit (same as --help).");
-    WriteOutput("  --version\t\tPrint version information and exit.");
-    WriteOutput("  --exe-info-only\tQuickly exit after extracting captured application's executable name");
-    WriteOutput("  --file-format-only\tQuickly exit after extracting file format information");
-    WriteOutput("  --env-vars-only\tQuickly exit after extracting captured application's environment variables");
+    GFXRECON_WRITE_CONSOLE("Required arguments:");
+    GFXRECON_WRITE_CONSOLE("  <capture-file>\tThe GFXReconstruct capture file to be processed.");
+    GFXRECON_WRITE_CONSOLE("\nOptional arguments:");
+    GFXRECON_WRITE_CONSOLE("  -h\t\t\tPrint usage information and exit (same as --help).");
+    GFXRECON_WRITE_CONSOLE("  --version\t\tPrint version information and exit.");
+    GFXRECON_WRITE_CONSOLE("  --exe-info-only\tQuickly exit after extracting captured application's executable name");
+    GFXRECON_WRITE_CONSOLE("  --file-format-only\tQuickly exit after extracting file format information");
+    GFXRECON_WRITE_CONSOLE("  --env-vars-only\tQuickly exit after extracting captured application's environment variables");
 #if defined(WIN32) && defined(_DEBUG)
-    WriteOutput("  --no-debug-popup\tDisable the 'Abort, Retry, Ignore' message box");
-    WriteOutput("        \t\tdisplayed when abort() is called (Windows debug only).");
+    GFXRECON_WRITE_CONSOLE("  --no-debug-popup\tDisable the 'Abort, Retry, Ignore' message box");
+    GFXRECON_WRITE_CONSOLE("        \t\tdisplayed when abort() is called (Windows debug only).");
 #endif
 #if defined(WIN32)
-    WriteOutput("  --enum-gpu-indices\tPrint GPU indices and exit");
+    GFXRECON_WRITE_CONSOLE("  --enum-gpu-indices\tPrint GPU indices and exit");
 #endif
-    WriteOutput("  --verbose\t\tOutput more information in JSON format");
-    WriteOutput(
+    GFXRECON_WRITE_CONSOLE("  --verbose\t\tOutput more information in JSON format");
+    GFXRECON_WRITE_CONSOLE(
         "  --output\t\tOutput generated information to the provided file. If not defined output goes to std::out");
 }
 
@@ -262,9 +224,9 @@ static bool CheckOptionPrintVersion(const char* exe_name, const gfxrecon::util::
             app_name.replace(0, dir_location + 1, "");
         }
 
-        WriteOutput("%s version info:", app_name.c_str());
-        WriteOutput("  GFXReconstruct Version %s", GetProjectVersionString());
-        WriteOutput("  Vulkan Header Version %u.%u.%u",
+        GFXRECON_WRITE_CONSOLE("%s version info:", app_name.c_str());
+        GFXRECON_WRITE_CONSOLE("  GFXReconstruct Version %s", GetProjectVersionString());
+        GFXRECON_WRITE_CONSOLE("  Vulkan Header Version %u.%u.%u",
                     VK_VERSION_MAJOR(VK_HEADER_VERSION_COMPLETE),
                     VK_VERSION_MINOR(VK_HEADER_VERSION_COMPLETE),
                     VK_VERSION_PATCH(VK_HEADER_VERSION_COMPLETE));
@@ -328,7 +290,7 @@ nlohmann::json GetOperationsJson(const AnnotationRecorder& annotation_recorder)
     return annotations_json;
 }
 
-void PrintAnnotationsText(const AnnotationRecorder& annotation_recorder)
+void PrintAnnotationsText(std::ostream& output_stream, const AnnotationRecorder& annotation_recorder)
 {
     // If the capture file had target annotations, display them in an info block
     if (!annotation_recorder.operation_annotations_.empty())
@@ -340,8 +302,8 @@ void PrintAnnotationsText(const AnnotationRecorder& annotation_recorder)
             { gfxrecon::format::kOperationAnnotationCaptureParameters, "Non-default capture options" },
         };
 
-        WriteOutput("");
-        WriteOutput("Annotations:");
+        output_stream << "\n";
+        output_stream << "Annotations:\n";
         for (const auto& annotation_info : annotation_recorder.operation_annotations_)
         {
             nlohmann::json json_obj = nlohmann::json::parse(annotation_info);
@@ -357,11 +319,11 @@ void PrintAnnotationsText(const AnnotationRecorder& annotation_recorder)
                         // So insert a tab right in  front of it.
                         std::string out = "\n\t" + item.value().dump(kDefaultIndent);
                         out.insert(out.size() - 1, 1, '\t');
-                        WriteOutput("\t%s: %s", target->second.c_str(), out.c_str());
+                        output_stream << std::format("\t{}: {}", target->second, out) << '\n';
                     }
                     else
                     {
-                        WriteOutput("\t%s: %s", target->second.c_str(), item.value().get<std::string>().c_str());
+                        output_stream << std::format("\t{}: {}", target->second, item.value().get<std::string>());
                     }
                 }
             }
@@ -378,8 +340,8 @@ nlohmann::json GetFileFormatInfoJson(const gfxrecon::decode::FileProcessor& file
 {
     FileFormatInfo file_format_info(file_processor);
 
-    std::string file_format_version = std::to_string(file_format_info.major_version) + "." + std::to_string(file_format_info.minor_version);
-    std::string frame_marker_string = GetFrameMarkerString(file_format_info.uses_frame_markers, file_format_info.NeedsUpdate());
+    auto file_format_version = std::to_string(file_format_info.major_version) + "." + std::to_string(file_format_info.minor_version);
+    auto frame_marker_string = GetFrameMarkerString(file_format_info.uses_frame_markers, file_format_info.NeedsUpdate());
 
     return {
         {"file-version", file_format_version},
@@ -387,12 +349,11 @@ nlohmann::json GetFileFormatInfoJson(const gfxrecon::decode::FileProcessor& file
     };
 }
 
-void PrintFileFormatInfoText(const gfxrecon::decode::FileProcessor& file_processor)
+void PrintFileFormatInfoText(std::ostream& output_stream, const gfxrecon::decode::FileProcessor& file_processor)
 {
     FileFormatInfo file_format_info(file_processor);
-    WriteOutput("\tFile format version: %u.%u", file_format_info.major_version, file_format_info.minor_version);
-    WriteOutput("\tFrame delimiters: %s",
-                GetFrameMarkerString(file_format_info.uses_frame_markers, file_format_info.NeedsUpdate()).c_str());
+    output_stream << std::format("\tFile format version: {}.{}", file_format_info.major_version, file_format_info.minor_version) << '\n';
+    output_stream << "\tFrame delimiters: " << GetFrameMarkerString(file_format_info.uses_frame_markers, file_format_info.NeedsUpdate()) << '\n';
 }
 
 std::string GetDriverInfoString(const gfxrecon::decode::InfoConsumer& driver_info_consumer)
@@ -407,18 +368,18 @@ std::string GetDriverInfoString(const gfxrecon::decode::InfoConsumer& driver_inf
     }
 }
 
-void PrintDriverInfoText(const gfxrecon::decode::InfoConsumer& driver_info_consumer)
+void PrintDriverInfoText(std::ostream& output_stream, const gfxrecon::decode::InfoConsumer& driver_info_consumer)
 {
-    WriteOutput("");
-    WriteOutput("Driver info:");
+    output_stream << "\n";
+    output_stream << "Driver info:\n";
     if (gfxrecon::util::platform::StringLength(driver_info_consumer.GetDriverDesc()) > 0)
     {
-        WriteOutput("\t%s", driver_info_consumer.GetDriverDesc());
+        output_stream << "\t" << driver_info_consumer.GetDriverDesc() << '\n';
     }
     else
     {
-        WriteOutput("\tDriver info not available.");
-        WriteOutput("");
+        output_stream << "\tDriver info not available.\n";
+        output_stream << "\n";
     }
 }
 
@@ -439,17 +400,18 @@ nlohmann::json GetExeInfoJson(const gfxrecon::decode::InfoConsumer& info_consume
     };
 }
 
-void PrintExeInfoText(const gfxrecon::decode::InfoConsumer& info_consumer)
+void PrintExeInfoText(std::ostream& output_stream, const gfxrecon::decode::InfoConsumer& info_consumer)
 {
     auto        exe_version  = info_consumer.GetAppVersion();
     std::string file_desc    = info_consumer.GetFileDescription();
     std::string product_name = info_consumer.GetProductName();
 
-    WriteOutput("Exe info:");
-    WriteOutput("\tApplication exe name: %s", info_consumer.GetAppExeName().c_str());
+    output_stream << "Exe info:\n";
+    output_stream << "\tApplication exe name: " << info_consumer.GetAppExeName() << '\n';
 
-    WriteOutput("\tApplication version: %d.%d.%d.%d", exe_version[0], exe_version[1], exe_version[2], exe_version[3]);
-    WriteOutput("\tApplication Company name: %s", info_consumer.GetCompanyName());
+    auto exe_version_string = std::format("{}.{}.{}.{}", exe_version[0], exe_version[1], exe_version[2], exe_version[3]);
+    output_stream << "\tApplication version: " << exe_version_string << '\n';
+    output_stream << "\tApplication Company name: " << info_consumer.GetCompanyName() << '\n';
 
     // we are combining file description and product name and presenting both only if they are not same
     std::string app_data = file_desc;
@@ -461,7 +423,7 @@ void PrintExeInfoText(const gfxrecon::decode::InfoConsumer& info_consumer)
             app_data += info_consumer.GetProductName();
         }
     }
-    WriteOutput("\tProduct name: %s", app_data.c_str());
+    output_stream << "\tProduct name: " << app_data << '\n';
 }
 
 nlohmann::json GetEnvironmentVariableInfoJson(const std::vector<std::string>& environment_variables)
@@ -480,12 +442,12 @@ nlohmann::json GetEnvironmentVariableInfoJson(const std::vector<std::string>& en
     return environment;
 }
 
-void PrintEnvironmentVariableInfoText(gfxrecon::decode::InfoConsumer& info_consumer)
+void PrintEnvironmentVariableInfoText(std::ostream& output_stream, gfxrecon::decode::InfoConsumer& info_consumer)
 {
-    WriteOutput("Environment variables:");
+    output_stream << "Environment variables:\n";
     for (const auto& var : info_consumer.GetEnvironmentVariables())
     {
-        WriteOutput("\t%s", var.c_str());
+        output_stream << "\t" << var << '\n';
     }
 }
 
@@ -507,11 +469,11 @@ nlohmann::json GetDetectedApiInfoJson(bool vulkan_present, bool dx12_present, bo
     return apis;
 }
 
-void PrintDetectedApiInfoText(bool vulkan_present, bool dx12_present, bool openxr_present)
+void PrintDetectedApiInfoText(std::ostream& output_stream, bool vulkan_present, bool dx12_present, bool openxr_present)
 {
     if (!vulkan_present && !dx12_present && !openxr_present)
     {
-        WriteOutput("Unable to detect capture file API(s). Writing all stats.");
+        output_stream << "Unable to detect capture file API(s). Writing all stats.\n";
     }
 }
 
@@ -540,7 +502,7 @@ nlohmann::json GetApiAgnosticStatsJson(const ApiAgnosticStats& api_agnostic_stat
     };
 }
 
-void PrintApiAgnosticStatsText(const ApiAgnosticStats& api_agnostic_stats, bool vulkan_present, bool dx12_present)
+void PrintApiAgnosticStatsText(std::ostream& output_stream, const ApiAgnosticStats& api_agnostic_stats, bool vulkan_present, bool dx12_present)
 {
     // Compression type.
     std::string compression_type_name = gfxrecon::format::GetCompressionTypeName(api_agnostic_stats.compression_type);
@@ -549,38 +511,40 @@ void PrintApiAgnosticStatsText(const ApiAgnosticStats& api_agnostic_stats, bool 
         compression_type_name = kUnrecognizedFormatString;
     }
 
-    WriteOutput("");
-    WriteOutput("File info:");
-    WriteOutput("\tCompression format: %s", compression_type_name.c_str());
+    output_stream << "\n";
+    output_stream << "File info:\n";
+    output_stream << "\tCompression format: " << compression_type_name << '\n';
 
     if (api_agnostic_stats.trim_start_frame == 0)
     {
         // Not a trimmed file.
-        WriteOutput("\tTotal frames: %u", api_agnostic_stats.frame_count);
+        output_stream << "\tTotal frames: " << api_agnostic_stats.frame_count << '\n';
     }
     else
     {
         if (api_agnostic_stats.blank_frame_count)
         {
-            WriteOutput("\tBlank frames: %u", api_agnostic_stats.blank_frame_count);
-            WriteOutput("\tCaptured frames: %u", api_agnostic_stats.frame_count);
+            output_stream << "\tBlank frames: " << api_agnostic_stats.blank_frame_count << '\n';
+            output_stream << "\tCaptured frames: " << api_agnostic_stats.frame_count << '\n';
         }
 
         // Print out the total frames and range based on the API (since we have 2 different ways of showing it)
         if (vulkan_present)
         {
-            WriteOutput("\tTotal frames: %u (trimmed frame range %u-%u)",
+            auto frames_string = std::format("{} (trimmed frame range {}-{})",
                         api_agnostic_stats.frame_count,
                         api_agnostic_stats.trim_start_frame,
                         api_agnostic_stats.trim_start_frame + api_agnostic_stats.frame_count - 1);
+            output_stream << "\tTotal frames: " << frames_string << '\n';
         }
         else
         {
-            WriteOutput("\tTotal frames: %u", api_agnostic_stats.blank_frame_count + api_agnostic_stats.frame_count);
+            output_stream << "\tTotal frames: " << api_agnostic_stats.blank_frame_count + api_agnostic_stats.frame_count << '\n';
 
-            WriteOutput("\tApplication frame range: %u-%u",
+            auto frames_string = std::format("{}-{}",
                         api_agnostic_stats.trim_start_frame,
                         api_agnostic_stats.trim_start_frame + api_agnostic_stats.frame_count - 1);
+            output_stream << "\tApplication frame range: " << frames_string << '\n';
         }
     }
 }
@@ -606,26 +570,27 @@ nlohmann::json GetVulkanDeviceMemoryStatsJson(uint64_t        alloc_count,
     };
 }
 
-void PrintVulkanDeviceMemoryStatsText(uint64_t alloc_count,
+void PrintVulkanDeviceMemoryStatsText(std::ostream& output_stream,
+                                      uint64_t alloc_count,
                                       uint64_t min_alloc,
                                       uint64_t max_alloc,
                                       uint32_t gfx_pipelines,
                                       uint32_t comp_pipelines,
                                       uint32_t rt_pipelines)
 {
-    WriteOutput("\nVulkan device memory allocation info:");
-    WriteOutput("\tTotal allocations:   %" PRIu64, alloc_count);
+    output_stream << "\nVulkan device memory allocation info:\n";
+    output_stream << "\tTotal allocations:   " << alloc_count << '\n';
 
     if (alloc_count > 0)
     {
-        WriteOutput("\tMin allocation size: %" PRIu64, min_alloc);
-        WriteOutput("\tMax allocation size: %" PRIu64, max_alloc);
+        output_stream << "\tMin allocation size: " << min_alloc << '\n';
+        output_stream << "\tMax allocation size: " << max_alloc << '\n';
     }
 
-    WriteOutput("\nVulkan pipeline info:");
-    WriteOutput("\tTotal graphics pipelines:   %" PRIu64, gfx_pipelines);
-    WriteOutput("\tTotal compute pipelines:    %" PRIu64, comp_pipelines);
-    WriteOutput("\tTotal raytracing pipelines: %" PRIu64, rt_pipelines);
+    output_stream << "\nVulkan pipeline info:\n";
+    output_stream << "\tTotal graphics pipelines:   " << gfx_pipelines << '\n';
+    output_stream << "\tTotal compute pipelines:    " << comp_pipelines << '\n';
+    output_stream << "\tTotal raytracing pipelines: " << rt_pipelines << '\n';
 }
 
 std::string GetVulkanDeviceTypeString(VkPhysicalDeviceType device_type)
@@ -735,7 +700,8 @@ nlohmann::json GetVulkanStatsJson(const gfxrecon::decode::FileProcessor&       f
     return vulkan_stats;
 }
 
-void PrintVulkanStatsText(const gfxrecon::decode::FileProcessor&       file_processor,
+void PrintVulkanStatsText(std::ostream& output_stream,
+                          const gfxrecon::decode::FileProcessor&       file_processor,
                           const gfxrecon::decode::VulkanStatsConsumer& vulkan_stats_consumer)
 {
 
@@ -770,39 +736,40 @@ void PrintVulkanStatsText(const gfxrecon::decode::FileProcessor&       file_proc
     }
     auto& best_instance_info = instance_info[best_instance];
 
-    WriteOutput("\nVulkan application info:");
-    WriteOutput("\tApplication name:    %s", best_instance_info.app_info.app_name.c_str());
-    WriteOutput("\tApplication version: %u", best_instance_info.app_info.app_version);
-    WriteOutput("\tEngine name:         %s", best_instance_info.app_info.engine_name.c_str());
-    WriteOutput("\tEngine version:      %u", best_instance_info.app_info.engine_version);
-    WriteOutput("\tTarget API version:  %u (%s)",
+    output_stream << "\nVulkan application info:\n";
+    output_stream << "\tApplication name:    " << best_instance_info.app_info.app_name << '\n';
+    output_stream << "\tApplication version: " << best_instance_info.app_info.app_version << '\n';
+    output_stream << "\tEngine name:         " << best_instance_info.app_info.engine_name << '\n';
+    output_stream << "\tEngine version:      " << best_instance_info.app_info.engine_version << '\n';
+    output_stream << "\tTarget API version:  " << std::format("{} ({})",
                 best_instance_info.app_info.api_version,
-                GetVkVersionString(best_instance_info.app_info.api_version).c_str());
+                GetVkVersionString(best_instance_info.app_info.api_version)) << '\n';
     std::string resolutions = "\tUsed resolutions:    ";
     for (const auto& resolution : best_instance_info.resolutions)
     {
         resolutions += std::to_string(resolution.width) + "x" + std::to_string(resolution.height) + " ";
     }
-    WriteOutput(resolutions.c_str());
+    output_stream << resolutions << '\n';
 
-    WriteOutput("\nVulkan physical device info:");
+    output_stream << "\nVulkan physical device info:\n";
     for (auto pd : best_instance_info.used_physical_devices)
     {
         auto properties = vulkan_stats_consumer.GetDeviceProperties(reinterpret_cast<gfxrecon::format::HandleId>(pd));
         if (properties != nullptr)
         {
-            WriteOutput("\tDevice name:         %s", properties->deviceName);
-            WriteOutput("\tDevice ID:           0x%x", properties->deviceID);
-            WriteOutput("\tVendor ID:           0x%x", properties->vendorID);
-            WriteOutput("\tDriver version:      %u (0x%x)", properties->driverVersion, properties->driverVersion);
-            WriteOutput("\tAPI version:         %u (%s)",
-                        properties->apiVersion,
-                        GetVkVersionString(properties->apiVersion).c_str());
+            output_stream << "\tDevice name:         " << properties->deviceName << '\n';
+            output_stream << "\tDevice ID:           " << std::format("0x{:x}", properties->deviceID) << '\n';
+            output_stream << "\tVendor ID:           " << std::format("0x{:x}", properties->vendorID) << '\n';
+            auto driver_version_string = std::format("{} (0x%{:x})", properties->driverVersion, properties->driverVersion); 
+            output_stream << "\tDriver version:      " << driver_version_string << '\n';
+            auto api_version_string = std::format("{} ({})", properties->apiVersion, GetVkVersionString(properties->apiVersion).c_str());
+            output_stream << "\tAPI version:         " << api_version_string << '\n';
         }
     }
 
     // For Verbose, we right out each devices alloc info.
-    PrintVulkanDeviceMemoryStatsText(vulkan_stats_consumer.GetTotalAllocationCount(),
+    PrintVulkanDeviceMemoryStatsText(output_stream,
+                                     vulkan_stats_consumer.GetTotalAllocationCount(),
                                      vulkan_stats_consumer.GetTotalMinAllocationSize(),
                                      vulkan_stats_consumer.GetTotalMaxAllocationSize(),
                                      vulkan_stats_consumer.GetTotalGraphicsPipelineCount(),
@@ -811,30 +778,29 @@ void PrintVulkanStatsText(const gfxrecon::decode::FileProcessor&       file_proc
 
     // TODO: This is the number of recorded draw calls, which will not reflect the number of draw calls
     // executed when recorded once to a command buffer that is submitted/replayed more than once.
-    // WriteOutput("\nDraw/dispatch call info:");
-    // WriteOutput("\tTotal draw calls: %" PRIu64, stats_consumer.GetTotalDrawCount());
-    // WriteOutput("\tTotal dispatch calls: %" PRIu64, stats_consumer.GetTotalDispatchCount());
+    // output_stream << "\nDraw/dispatch call info:\n";
+    // output_stream << "\tTotal draw calls: " << stats_consumer.GetTotalDrawCount() << '\n';
+    // output_stream << "\tTotal dispatch calls: " << stats_consumer.GetTotalDispatchCount() << '\n';
 
     // Print Physical device info
     const gfxrecon::decode::VulkanStatsConsumer::PhysicalDeviceProperties& physical_device_properties =
         vulkan_stats_consumer.GetPhysicalDeviceProperties();
 
-    WriteOutput("\nPhysical device properties:");
+    output_stream << "\nPhysical device properties:\n";
     for (const auto& props : physical_device_properties)
     {
-        WriteOutput("  Device: %" PRIu64, props.first);
-        WriteOutput("\tAPI version:         0x%x (%s)",
-                    props.second.apiVersion,
-                    GetVkVersionString(props.second.apiVersion).c_str());
-        WriteOutput("\tDriver version:      0x%x", props.second.driverVersion);
-        WriteOutput("\tVendor ID:           0x%x", props.second.vendorID);
-        WriteOutput("\tDevice ID:           0x%x", props.second.deviceID);
-        WriteOutput("\tDevice name:         %s", props.second.deviceName);
+        output_stream << "  Device: " << props.first << '\n';
+        auto api_version = std::format("0x%{:x} ({})", props.second.apiVersion, GetVkVersionString(props.second.apiVersion).c_str());
+        output_stream << "\tAPI version:         " << api_version << '\n';
+        output_stream << "\tDriver version:      " << std::format("0x{:x}", props.second.driverVersion) << '\n';
+        output_stream << "\tVendor ID:           " << std::format("0x{:x}", props.second.vendorID) << '\n';
+        output_stream << "\tDevice ID:           " << std::format("0x{:x}", props.second.deviceID) << '\n';
+        output_stream << "\tDevice name:         " << props.second.deviceName << '\n';
     }
 
     if (file_processor.GetCurrentFrameNumber() == 0)
     {
-        WriteOutput("\nFile did not contain any frames");
+        output_stream << "\nFile did not contain any frames\n";
     }
 }
 
@@ -859,7 +825,8 @@ nlohmann::json GetDx12RuntimeInfoJson(gfxrecon::decode::Dx12StatsConsumer& dx12_
     };
 }
 
-void PrintDx12RuntimeInfoText(gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
+void PrintDx12RuntimeInfoText(std::ostream& output_stream,
+                              gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
 {
     gfxrecon::format::Dx12RuntimeInfo runtime_info = dx12_consumer.GetDx12RuntimeInfo();
 
@@ -873,10 +840,10 @@ void PrintDx12RuntimeInfoText(gfxrecon::decode::Dx12StatsConsumer& dx12_consumer
                       std::to_string(runtime_info.version[2]) + "." + std::to_string(runtime_info.version[3]);
     }
 
-    WriteOutput("D3D12 runtime info:");
-    WriteOutput("\tVersion: %s", runtime_ver.c_str());
-    WriteOutput("\tSource: %s", runtime_src.c_str());
-    WriteOutput("");
+    output_stream << "D3D12 runtime info:\n";
+    output_stream << "\tVersion: " << runtime_ver << '\n';
+    output_stream << "\tSource: " << runtime_src << '\n';
+    output_stream << "\n";
 }
 
 nlohmann::json GetDx12AdapterInfoJson(gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
@@ -931,9 +898,10 @@ nlohmann::json GetDx12AdapterInfoJson(gfxrecon::decode::Dx12StatsConsumer& dx12_
     return adapters_json;
 }
 
-void PrintDx12AdapterInfoText(gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
+void PrintDx12AdapterInfoText(std::ostream& output_stream,
+                              gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
 {
-    WriteOutput("D3D12 adapter info:");
+    output_stream << "D3D12 adapter info:\n";
 
     const auto& adapters = dx12_consumer.GetAdapters();
 
@@ -963,26 +931,27 @@ void PrintDx12AdapterInfoText(gfxrecon::decode::Dx12StatsConsumer& dx12_consumer
             std::string adapter_type =
                 AdapterTypeToString(gfxrecon::graphics::dx12::ExtractAdapterType(adapter.extra_info));
 
-            WriteOutput("\tDescription: %s %s",
+            auto description_string = std::format("{} {}", 
                         gfxrecon::util::WCharArrayToString(adapter.Description).c_str(),
                         adapter_workload_pct.c_str());
-            WriteOutput("\tVendor ID: 0x%x", adapter.VendorId);
-            WriteOutput("\tDevice ID: 0x%x", adapter.DeviceId);
-            WriteOutput("\tSubsys ID: 0x%x", adapter.SubSysId);
-            WriteOutput("\tRevision: %u", adapter.Revision);
-            WriteOutput("\tDedicated Video Memory: %" PRIu64, adapter.DedicatedVideoMemory);
-            WriteOutput("\tDedicated System Memory: %" PRIu64, adapter.DedicatedSystemMemory);
-            WriteOutput("\tShared System Memory: %" PRIu64, adapter.SharedSystemMemory);
-            WriteOutput("\tLUID LowPart: 0x%x", adapter.LuidLowPart);
-            WriteOutput("\tLUID HighPart: 0x%x", adapter.LuidHighPart);
-            WriteOutput("\tAdapter type: %s", adapter_type.c_str());
-            WriteOutput("");
+            output_stream << "\tDescription: " << description_string << '\n';
+            output_stream << "\tVendor ID: " << std::format("0x{:x}", adapter.VendorId) << '\n';
+            output_stream << "\tDevice ID: " << std::format("0x{:x}", adapter.DeviceId) << '\n';
+            output_stream << "\tSubsys ID: " << std::format("0x{:x}", adapter.SubSysId) << '\n';
+            output_stream << "\tRevision: " << adapter.Revision << '\n';
+            output_stream << "\tDedicated Video Memory: " << adapter.DedicatedVideoMemory << '\n';
+            output_stream << "\tDedicated System Memory: " << adapter.DedicatedSystemMemory << '\n';
+            output_stream << "\tShared System Memory: " << adapter.SharedSystemMemory << '\n';
+            output_stream << "\tLUID LowPart: " << std::format("0x{:x}", adapter.LuidLowPart) << '\n';
+            output_stream << "\tLUID HighPart: " << std::format("0x{:x}", adapter.LuidHighPart) << '\n';
+            output_stream << "\tAdapter type: " << adapter_type << '\n';
+            output_stream << "\n";
         }
     }
     else
     {
-        WriteOutput("\tAdapter info not available.");
-        WriteOutput("");
+        output_stream << "\tAdapter info not available.\n";
+        output_stream << "\n";
     }
 }
 
@@ -992,20 +961,20 @@ nlohmann::json GetDx12SwapchainInfoJson(gfxrecon::decode::Dx12StatsConsumer& dx1
     return {"dimensions", {{"width", width}, {"height", height}}};
 }
 
-void PrintDx12SwapchainInfoText(gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
+void PrintDx12SwapchainInfoText(std::ostream& output_stream, gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
 {
-    WriteOutput("D3D12 swapchain info:");
+    output_stream << "D3D12 swapchain info:\n";
 
     if (dx12_consumer.FoundSwapchainInfo())
     {
-        WriteOutput("\tDimensions: %s", dx12_consumer.GetSwapchainDimensionsString().c_str());
+        output_stream << "\tDimensions: " << dx12_consumer.GetSwapchainDimensionsString() << '\n';
     }
     else
     {
-        WriteOutput("\tDimensions not available.");
+        output_stream << "\tDimensions not available.\n";
     }
 
-    WriteOutput("");
+    output_stream << "\n";
 }
 
 nlohmann::json GetDxrEiInfoJson(gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
@@ -1020,39 +989,39 @@ nlohmann::json GetDxrEiInfoJson(gfxrecon::decode::Dx12StatsConsumer& dx12_consum
     return dxr_ei_info;
 }
 
-void PrintDxrEiInfoText(gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
+void PrintDxrEiInfoText(std::ostream& output_stream, gfxrecon::decode::Dx12StatsConsumer& dx12_consumer)
 {
     if (dx12_consumer.ContainsEiWorkload())
     {
-        WriteOutput("D3D12 EI workload: yes");
+        output_stream << "D3D12 EI workload: yes\n";
     }
     else
     {
-        WriteOutput("D3D12 EI workload: no");
+        output_stream << "D3D12 EI workload: no\n";
     }
 
-    WriteOutput("");
+    output_stream << "\n";
 
     if (dx12_consumer.ContainsDxrWorkload())
     {
-        WriteOutput("D3D12 DXR workload: yes");
+        output_stream << "D3D12 DXR workload: yes\n";
     }
     else
     {
-        WriteOutput("D3D12 DXR workload: no");
+        output_stream << "D3D12 DXR workload: no\n";
     }
 
     if (dx12_consumer.ContainsEiWorkload() || dx12_consumer.ContainsDxrWorkload())
     {
-        WriteOutput("");
+        output_stream << "\n";
 
         if (dx12_consumer.ContainsOptFillMem())
         {
-            WriteOutput("D3D12 DXR/EI optimized: yes");
+            output_stream << "D3D12 DXR/EI optimized: yes\n";
         }
         else
         {
-            WriteOutput("D3D12 DXR/EI optimized: no");
+            output_stream << "D3D12 DXR/EI optimized: no\n";
         }
     }
 }
@@ -1082,7 +1051,8 @@ nlohmann::json GetD3D12StatsJson(gfxrecon::decode::FileProcessor&     file_proce
     return d3d12_json;
 }
 
-void PrintD3D12StatsText(gfxrecon::decode::FileProcessor&     file_processor,
+void PrintD3D12StatsText(std::ostream& output_stream,
+                         gfxrecon::decode::FileProcessor&     file_processor,
                          gfxrecon::decode::Dx12StatsConsumer& dx12_consumer,
                          const ApiAgnosticStats&              api_agnostic_stats,
                          gfxrecon::decode::InfoConsumer&      info_consumer,
@@ -1090,14 +1060,14 @@ void PrintD3D12StatsText(gfxrecon::decode::FileProcessor&     file_processor,
 {
     if (dx12_consumer.GetDXGITestPresentCount() > 0 && api_agnostic_stats.uses_frame_markers == false)
     {
-        WriteOutput("\tTest present count: %u", dx12_consumer.GetDXGITestPresentCount());
+        output_stream << "\tTest present count: " << dx12_consumer.GetDXGITestPresentCount() << '\n';
     }
 
-    PrintDriverInfoText(info_consumer);
-    PrintDx12RuntimeInfoText(dx12_consumer);
-    PrintDx12AdapterInfoText(dx12_consumer);
-    PrintDx12SwapchainInfoText(dx12_consumer);
-    PrintDxrEiInfoText(dx12_consumer);
+    PrintDriverInfoText(output_stream, info_consumer);
+    PrintDx12RuntimeInfoText(output_stream, dx12_consumer);
+    PrintDx12AdapterInfoText(output_stream, dx12_consumer);
+    PrintDx12SwapchainInfoText(output_stream, dx12_consumer);
+    PrintDxrEiInfoText(output_stream, dx12_consumer);
 }
 
 static bool CheckOptionEnumGpuIndices(const char* exe_name, const gfxrecon::util::ArgumentParser& arg_parser)
@@ -1113,7 +1083,7 @@ static bool CheckOptionEnumGpuIndices(const char* exe_name, const gfxrecon::util
             gfxrecon::graphics::dx12::ActiveAdapterMap adapters{};
             gfxrecon::graphics::dx12::TrackAdapters(result, reinterpret_cast<void**>(&factory1), adapters);
 
-            WriteOutput("GPU index\tGPU name\tSubSys ID");
+            GFXRECON_WRITE_CONSOLE("GPU index\tGPU name\tSubSys ID");
             for (size_t index = 0; index < adapters.size(); ++index)
             {
                 for (auto adapter : adapters)
@@ -1123,7 +1093,7 @@ static bool CheckOptionEnumGpuIndices(const char* exe_name, const gfxrecon::util
                         std::string replay_adapter_str =
                             gfxrecon::util::WCharArrayToString(adapter.second.internal_desc.Description);
 
-                        WriteOutput("%-9x\t%s\t%u",
+                        GFXRECON_WRITE_CONSOLE("%-9x\t%s\t%u",
                                     adapter.second.adapter_idx,
                                     replay_adapter_str.c_str(),
                                     adapter.second.internal_desc.SubSysId);
@@ -1180,35 +1150,37 @@ nlohmann::json GetOpenXrStatsJson(const gfxrecon::decode::FileProcessor&       f
     return openxr_stats;
 }
 
-void PrintOpenXrStatsText(const gfxrecon::decode::FileProcessor&       file_processor,
+void PrintOpenXrStatsText(std::ostream& output_stream,
+                          const gfxrecon::decode::FileProcessor&       file_processor,
                           const gfxrecon::decode::OpenXrStatsConsumer& openxr_stats_consumer)
 {
     auto instance_info = openxr_stats_consumer.GetInstanceInfo();
 
-    WriteOutput("");
-    WriteOutput("OpenXR info:");
+    output_stream << "\n";
+    output_stream << "OpenXR info:\n";
 
-    WriteOutput("\tHeader Version:             %u.%u.%u",
+    auto xr_version_string = std::format("{}.{}.{}", 
                 XR_VERSION_MAJOR(XR_CURRENT_API_VERSION),
                 XR_VERSION_MINOR(XR_CURRENT_API_VERSION),
                 XR_VERSION_PATCH(XR_CURRENT_API_VERSION));
+    output_stream << "\tHeader Version:             " << xr_version_string << '\n';
 
-    WriteOutput("\tNumber of OpenXR Instances: %d", instance_info.size());
+    output_stream << "\tNumber of OpenXR Instances: " << instance_info.size() << '\n';
 
     // For non-verbose standard output, just print first application/instance info
-    WriteOutput("\nOpenXR application info:");
-    WriteOutput("\tApplication name:    %s", instance_info[0].app_name.c_str());
-    WriteOutput("\tApplication version: %u", instance_info[0].app_version);
-    WriteOutput("\tEngine name:         %s", instance_info[0].engine_name.c_str());
-    WriteOutput("\tEngine version:      %u", instance_info[0].engine_version);
-    WriteOutput("\tTarget API version:  %u (%s)",
+    output_stream << "\nOpenXR application info:\n";
+    output_stream << "\tApplication name:    " << instance_info[0].app_name << '\n';
+    output_stream << "\tApplication version: " << instance_info[0].app_version << '\n';
+    output_stream << "\tEngine name:         " << instance_info[0].engine_name << '\n';
+    output_stream << "\tEngine version:      " << instance_info[0].engine_version << '\n';
+    output_stream << std::format("\tTarget API version:  {} ({})",
                 instance_info[0].api_version,
-                GetXrVersionString(instance_info[0].api_version).c_str());
+                GetXrVersionString(instance_info[0].api_version).c_str()) << '\n';
 }
 #endif // ENABLE_OPENXR_SUPPORT
 
 // A short pass to get exe info. Only processes the first blocks of a capture file.
-void GatherAndPrintExeInfo(const std::string& input_filename)
+void GatherAndPrintExeInfo(std::ostream& output_stream, const std::string& input_filename)
 {
     gfxrecon::decode::InfoConsumer  info_consumer(true);
     gfxrecon::decode::FileProcessor file_processor;
@@ -1219,12 +1191,12 @@ void GatherAndPrintExeInfo(const std::string& input_filename)
         file_processor.AddDecoder(&info_decoder);
         file_processor.ProcessAllFrames();
 
-        PrintExeInfoText(info_consumer);
+        PrintExeInfoText(output_stream, info_consumer);
     }
 }
 
 // A short pass to get file format info. Only processes the first two frames of a capture file.
-void GatherAndPrintFileFormatInfo(const std::string& input_filename)
+void GatherAndPrintFileFormatInfo(std::ostream& output_stream, const std::string& input_filename)
 {
     const gfxrecon::decode::InfoConsumer::NoMaxBlockTag no_max_tag;
     gfxrecon::decode::InfoConsumer                      info_consumer(no_max_tag);
@@ -1239,12 +1211,12 @@ void GatherAndPrintFileFormatInfo(const std::string& input_filename)
         {
             file_processor.ProcessNextFrame();
         }
-        WriteOutput("File format info:");
-        PrintFileFormatInfoText(file_processor);
+        output_stream << "File format info:\n";
+        PrintFileFormatInfoText(output_stream, file_processor);
     }
 }
 
-void GatherAndPrintEnvVars(const std::string& input_filename)
+void GatherAndPrintEnvVars(std::ostream& output_stream, const std::string& input_filename)
 {
     gfxrecon::decode::FileProcessor file_processor;
     if (file_processor.Initialize(input_filename))
@@ -1256,7 +1228,7 @@ void GatherAndPrintEnvVars(const std::string& input_filename)
         file_processor.ProcessAllFrames();
         if (file_processor.GetErrorState() == gfxrecon::decode::BlockIOError::kErrorNone)
         {
-            PrintEnvironmentVariableInfoText(info_consumer);
+            PrintEnvironmentVariableInfoText(output_stream, info_consumer);
         }
         else
         {
@@ -1265,7 +1237,7 @@ void GatherAndPrintEnvVars(const std::string& input_filename)
     }
 }
 
-void GatherAndPrintAllInfo(const std::string& input_filename, bool output_json)
+void GatherAndPrintAllInfo(std::ostream& output_stream, const std::string& input_filename, bool output_json)
 {
     gfxrecon::decode::FileProcessor file_processor;
     if (file_processor.Initialize(input_filename))
@@ -1394,52 +1366,52 @@ void GatherAndPrintAllInfo(const std::string& input_filename, bool output_json)
                     json_content["capture-file"]["frames"]["total-count"] = 0;
                 }
 
-                WriteOutput(json_content.dump(4, ' ', true).c_str());
+                output_stream << json_content.dump(4, ' ', true);
             }
             else
             {
-                PrintDetectedApiInfoText(vulkan_present, dx12_present, openxr_present);
-                PrintExeInfoText(info_consumer);
+                PrintDetectedApiInfoText(output_stream, vulkan_present, dx12_present, openxr_present);
+                PrintExeInfoText(output_stream, info_consumer);
                 if (api_agnostic_stats.error_state == gfxrecon::decode::BlockIOError::kErrorNone)
                 {
-                    PrintApiAgnosticStatsText(api_agnostic_stats, vulkan_present, dx12_present);
+                    PrintApiAgnosticStatsText(output_stream, api_agnostic_stats, vulkan_present, dx12_present);
 
                     if (vulkan_present)
                     {
-                        PrintVulkanStatsText(file_processor, vulkan_stats_consumer);
+                        PrintVulkanStatsText(output_stream, file_processor, vulkan_stats_consumer);
                     }
 
 #if defined(D3D12_SUPPORT)
                     if (dx12_present)
                     {
                         PrintD3D12StatsText(
-                            file_processor, dx12_consumer, api_agnostic_stats, info_consumer, annotation_recorder);
+                            output_stream, file_processor, dx12_consumer, api_agnostic_stats, info_consumer, annotation_recorder);
                     }
 #endif
 #if ENABLE_OPENXR_SUPPORT
                     if (openxr_present)
                     {
-                        PrintOpenXrStatsText(file_processor, openxr_stats_consumer);
+                        PrintOpenXrStatsText(output_stream, file_processor, openxr_stats_consumer);
                     }
 #endif
 
-                    PrintAnnotationsText(annotation_recorder);
+                    PrintAnnotationsText(output_stream, annotation_recorder);
                 }
                 else if (api_agnostic_stats.error_state != gfxrecon::decode::BlockIOError::kErrorNone)
                 {
-                    WriteOutput("A failure has occurred during file processing");
+                    GFXRECON_LOG_ERROR("A failure has occurred during file processing");
                     gfxrecon::util::Log::Release();
                     exit(-1);
                 }
                 else
                 {
-                    WriteOutput("File did not contain any frames");
+                    output_stream << "File did not contain any frames\n";
                 }
             }
         }
         else
         {
-            WriteOutput("Encountered error while reading capture. Stats unavailable.");
+            output_stream << "Encountered error while reading capture. Stats unavailable.\n";
         }
     }
 }
@@ -1481,27 +1453,32 @@ int main(int argc, const char** argv)
     const std::vector<std::string>& positional_arguments = arg_parser.GetPositionalArguments();
     std::string                     input_filename       = positional_arguments[0];
 
+    std::ofstream output_file;
+    bool          use_file = false;
     if (arg_parser.IsArgumentSet(kOutputFileArgument))
     {
         std::string output_filename = arg_parser.GetArgumentValue(kOutputFileArgument);
-        g_output_file.open(output_filename);
+        output_file.open(output_filename);
+        use_file      = true;
+    } else {
     }
+    std::ostream& output_stream = use_file ? output_file : std::cout;
 
     if (arg_parser.IsOptionSet(kExeInfoOnlyOption))
     {
-        GatherAndPrintExeInfo(input_filename);
+        GatherAndPrintExeInfo(output_stream, input_filename);
     }
     else if (arg_parser.IsOptionSet(kEnvVarsOnlyOption))
     {
-        GatherAndPrintEnvVars(input_filename);
+        GatherAndPrintEnvVars(output_stream, input_filename);
     }
     else if (arg_parser.IsOptionSet(kFileFormatOnlyOption))
     {
-        GatherAndPrintFileFormatInfo(input_filename);
+        GatherAndPrintFileFormatInfo(output_stream, input_filename);
     }
     else
     {
-        GatherAndPrintAllInfo(input_filename, arg_parser.IsOptionSet(kVerboseOption));
+        GatherAndPrintAllInfo(output_stream, input_filename, arg_parser.IsOptionSet(kVerboseOption));
     }
 
     gfxrecon::util::Log::Release();

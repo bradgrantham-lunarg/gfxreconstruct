@@ -285,7 +285,7 @@ void PrintAnnotationsText(std::ostream& output_stream, const AnnotationRecorder&
                     }
                     else
                     {
-                        output_stream << std::format("\t{}: {}", target->second, item.value().get<std::string>());
+                        output_stream << std::format("\t{}: {}", target->second, item.value().get<std::string>()) << '\n';
                     }
                 }
             }

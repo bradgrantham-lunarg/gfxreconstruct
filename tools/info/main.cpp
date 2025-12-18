@@ -23,6 +23,8 @@
 
 #include PROJECT_VERSION_HEADER_FILE
 
+#include "tool_settings.h"
+
 #include "decode/decode_api_detection.h"
 #include "decode/stat_consumer.h"
 #include "decode/stat_consumer_base.h"
@@ -72,10 +74,6 @@
 
 #include <nlohmann/json.hpp>
 
-const char kHelpShortOption[]      = "-h";
-const char kHelpLongOption[]       = "--help";
-const char kVersionOption[]        = "--version";
-const char kNoDebugPopup[]         = "--no-debug-popup";
 const char kExeInfoOnlyOption[]    = "--exe-info-only";
 const char kEnvVarsOnlyOption[]    = "--env-vars-only";
 const char kFileFormatOnlyOption[] = "--file-format-only";
@@ -85,7 +83,7 @@ const char kOutputFileArgument[]   = "--output";
 
 const char kOptions[]   = "-h|--help,--version,--no-debug-popup,--exe-info-only,--env-vars-only,--file-format-only,--"
                           "enum-gpu-indices,--verbose";
-const char kArguments[] = "--output";
+const char kArguments[] = "--log-level,--output";
 
 const char kUnrecognizedFormatString[] = "<unrecognized-format>";
 
@@ -199,42 +197,6 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("  --verbose\t\tOutput more information in JSON format");
     GFXRECON_WRITE_CONSOLE(
         "  --output\t\tOutput generated information to the provided file. If not defined output goes to std::out");
-}
-
-static bool CheckOptionPrintUsage(const char* exe_name, const gfxrecon::util::ArgumentParser& arg_parser)
-{
-    if (arg_parser.IsOptionSet(kHelpShortOption) || arg_parser.IsOptionSet(kHelpLongOption))
-    {
-        PrintUsage(exe_name);
-        return true;
-    }
-
-    return false;
-}
-
-static bool CheckOptionPrintVersion(const char* exe_name, const gfxrecon::util::ArgumentParser& arg_parser)
-{
-    if (arg_parser.IsOptionSet(kVersionOption))
-    {
-        std::string app_name     = exe_name;
-        size_t      dir_location = app_name.find_last_of("/\\");
-
-        if (dir_location >= 0)
-        {
-            app_name.replace(0, dir_location + 1, "");
-        }
-
-        GFXRECON_WRITE_CONSOLE("%s version info:", app_name.c_str());
-        GFXRECON_WRITE_CONSOLE("  GFXReconstruct Version %s", GetProjectVersionString());
-        GFXRECON_WRITE_CONSOLE("  Vulkan Header Version %u.%u.%u",
-                    VK_VERSION_MAJOR(VK_HEADER_VERSION_COMPLETE),
-                    VK_VERSION_MINOR(VK_HEADER_VERSION_COMPLETE),
-                    VK_VERSION_PATCH(VK_HEADER_VERSION_COMPLETE));
-
-        return true;
-    }
-
-    return false;
 }
 
 static std::string GetVkVersionString(uint32_t api_version)
@@ -1422,6 +1384,11 @@ int main(int argc, const char** argv)
 
     gfxrecon::util::ArgumentParser arg_parser(argc, argv, kOptions, kArguments);
 
+    gfxrecon::util::Log::Settings log_settings;
+    GetLogSettings(arg_parser, log_settings);
+    gfxrecon::util::Log::Release();
+    gfxrecon::util::Log::Init(log_settings);
+
     if (CheckOptionPrintUsage(argv[0], arg_parser) || CheckOptionPrintVersion(argv[0], arg_parser))
     {
         gfxrecon::util::Log::Release();
@@ -1457,11 +1424,13 @@ int main(int argc, const char** argv)
     bool          use_file = false;
     if (arg_parser.IsArgumentSet(kOutputFileArgument))
     {
+        printf("thinks output is enabled\n");
         std::string output_filename = arg_parser.GetArgumentValue(kOutputFileArgument);
+        printf("thinks output is %s\n", output_filename.c_str());
         output_file.open(output_filename);
         use_file      = true;
-    } else {
     }
+
     std::ostream& output_stream = use_file ? output_file : std::cout;
 
     if (arg_parser.IsOptionSet(kExeInfoOnlyOption))

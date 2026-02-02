@@ -309,6 +309,13 @@ if(ANDROID)
     add_link_options(-Wl,-z,max-page-size=16384)
 endif()
 
+# Force static libc++ for GCC-based builds - fix dependency blocking
+# binaries on older Ubuntu
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(STATUS "Enabling static-libstdc++ and static-libgcc for GCC builds")
+    add_link_options("-static-libstdc++" "-static-libgcc")
+endif()
+
 # GFXReconstruct provided find modules
 if (WIN32)
     find_package(Detours)

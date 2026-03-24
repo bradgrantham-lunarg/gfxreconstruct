@@ -194,14 +194,11 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer
         {
             auto create_info = pCreateInfo->GetPointer();
             auto app_info    = create_info->pApplicationInfo;
-            if (app_info != nullptr)
-            {
-                const VkInstance      inst = reinterpret_cast<const VkInstance>(*pInstance->GetPointer());
-                VulkanInstanceTracker instance_tracker(
-                    app_info, create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, inst);
-                instance_info_[inst]   = std::move(instance_tracker);
-                last_created_instance_ = inst;
-            }
+            const VkInstance      inst = reinterpret_cast<const VkInstance>(*pInstance->GetPointer());
+            VulkanInstanceTracker instance_tracker(
+                app_info, create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, inst);
+            instance_info_[inst]   = std::move(instance_tracker);
+            last_created_instance_ = inst;
         }
     }
 

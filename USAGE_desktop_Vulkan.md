@@ -142,7 +142,7 @@ for direct modification.
 To successfully capture an application, the GFXReconstruct layer must be able to
 detect if the application modifies the mapped memory in order to dump the changes
 in the capture file so that they can be re-applied while replaying.
-To achieve this GFXR utilizes four different modes:
+To achieve this GFXR utilizes five different modes:
 
 ##### 1. `assisted`
 This mode expects the application to call `vkFlushMappedMemoryRanges`
@@ -230,6 +230,34 @@ reset. The signal used one of the real time signals, the first in the range
 `userfaultfd` is less efficient performance wise than `page_guard` but
 should be fast enough for real-world applications and games.
 
+##### 5. `scanned`
+`scanned` tracks modifications to individual memory pages by maintaining
+per-page checksums of mapped memory. On calls to `vkFlushMappedMemoryRanges`,
+`vkUnmapMemory`, and `vkQueueSubmit`, the mapped memory is scanned and
+checksums are recomputed for each page. Pages whose checksum differs from
+the previously stored value are marked dirty and written to the capture
+file. Contiguous dirty pages are coalesced into a single write operation.
+
+Unlike `page_guard` and `userfaultfd`, `scanned` does not allocate shadow
+memory and does not replace the mapped memory pointer returned by the driver.
+The application writes directly to the driver-mapped memory, which avoids
+the complexities of shadow memory management, signal handlers, and OS-level
+page protection mechanisms.
+
+The cost of `scanned` is proportional to the total size of all mapped memory
+at each sync point, as every page must be read and checksummed. On modern
+CPUs with hardware CRC32 instructions (SSE4.2 on x86, CRC32 on ARM), this
+is very fast. A portable fallback implementation is used on CPUs without
+hardware acceleration.
+
+`scanned` is a good choice when `page_guard` is unavailable or unreliable,
+such as on platforms where signal handling conflicts arise or where shadow
+memory overhead is undesirable. It is more efficient than `unassisted` in
+both performance and capture file size, as only changed pages are written.
+However, it is less efficient than `page_guard` because it must read all
+mapped memory at each sync point rather than relying on the OS to report
+only the pages that were actually modified.
+
 ##### Disabling Debug Breaks Triggered by the GFXReconstruct Layer
 
 When running an application in a debugger with the layer enabled, the
@@ -306,7 +334,7 @@ option values.
 | Log File Flush After Write                     | GFXRECON_LOG_FILE_FLUSH_AFTER_WRITE                     | BOOL    | Flush the log file to disk after each write when true. Default is: `false`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | Log File Keep Open                             | GFXRECON_LOG_FILE_KEEP_OPEN                             | BOOL    | Keep the log file open between log messages when true, or close and reopen the log file for each message when false. Default is: `true`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Log Output to Debug Console                    | GFXRECON_LOG_OUTPUT_TO_OS_DEBUG_STRING                  | BOOL    | Windows only option.  Log messages will be written to the Debug Console with `OutputDebugStringA`. Default is: `false`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Memory Tracking Mode                           | GFXRECON_MEMORY_TRACKING_MODE                           | STRING  | Specifies the memory tracking mode to use for detecting modifications to mapped Vulkan memory objects. Available options are: `page_guard`, `userfaultfd`, `assisted`, and `unassisted`. See [Understanding GFXReconstruct Layer Memory Capture](#understanding-gfxreconstruct-layer-memory-capture) for more details. Default is `page_guard`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Memory Tracking Mode                           | GFXRECON_MEMORY_TRACKING_MODE                           | STRING  | Specifies the memory tracking mode to use for detecting modifications to mapped Vulkan memory objects. Available options are: `page_guard`, `userfaultfd`, `scanned`, `assisted`, and `unassisted`. See [Understanding GFXReconstruct Layer Memory Capture](#understanding-gfxreconstruct-layer-memory-capture) for more details. Default is `page_guard`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Page Guard Copy on Map                         | GFXRECON_PAGE_GUARD_COPY_ON_MAP                         | BOOL    | When the `page_guard` memory tracking mode is enabled, copies the content of the mapped memory to the shadow memory immediately after the memory is mapped. Default is: `true`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Page Guard Separate Read Tracking              | GFXRECON_PAGE_GUARD_SEPARATE_READ                       | BOOL    | When the `page_guard` memory tracking mode is enabled, copies the content of pages accessed for read from mapped memory to shadow memory on each read. Can overwrite unprocessed shadow memory content when an application is reading from and writing to the same page. Default is: `true`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Page Guard External Memory                     | GFXRECON_PAGE_GUARD_EXTERNAL_MEMORY                     | BOOL    | When the `page_guard` memory tracking mode is enabled, use the VK_EXT_external_memory_host extension to eliminate the need for shadow memory allocations. For each memory allocation from a host visible memory type, the capture layer will create an allocation from system memory, which it can monitor for write access, and provide that allocation to vkAllocateMemory as external memory. Only available on Windows. Default is `false`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -569,13 +597,16 @@ optional arguments:
   --log-timestamps      Output a timestamp in front of each log message.
   --log-file <logFile>  Write log messages to a file at the specified path.
                         Default is: Empty string (file logging disabled)
-  --memory-tracking-mode {page_guard,assisted,unassisted}
+  --memory-tracking-mode {page_guard,assisted,unassisted,scanned}
                         Method to use to track changes to memory mapped objects:
                            page_guard: use guard pages to track changes (default)
                            assisted:   application will call vkFlushMappedMemoryRanges
                                        for memory to be written to the capture file
                            unassisted: all mapped memory will be written to the
                                        capture file during VkQueueSubmit and VkUnmapMemory
+                           scanned:    use per-page checksums to detect changes to
+                                       mapped memory without shadow memory or OS
+                                       page protection
 ```
 
 Most of the options for `gfxrecon-capture-vulkan.py` result in the script setting

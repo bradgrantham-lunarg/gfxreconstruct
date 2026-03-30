@@ -46,6 +46,7 @@
 #include "util/logging.h"
 #include "util/page_guard_manager.h"
 #include "util/platform.h"
+#include "util/scan_checksum_tracker.h"
 
 #include <cassert>
 #include <unordered_set>
@@ -2168,6 +2169,13 @@ void VulkanCaptureManager::ReleaseAndroidHardwareBuffer(AHardwareBuffer* hardwar
 
             manager->RemoveTrackedMemory(entry->second.memory_id);
         }
+        else if (GetMemoryTrackingMode() == CaptureSettings::MemoryTrackingMode::kScanned)
+        {
+            util::ScanChecksumTracker* tracker = util::ScanChecksumTracker::Get();
+            assert(tracker != nullptr);
+
+            tracker->RemoveTrackedMemory(entry->second.memory_id);
+        }
 
         // There are no more references to the buffer, so we can submit a destroy buffer command.
         WriteDestroyHardwareBufferCmd(entry->first);
@@ -2813,6 +2821,28 @@ void VulkanCaptureManager::PostProcess_vkMapMemory(VkResult         result,
                 std::lock_guard<std::mutex> lock(GetMappedMemoryLock());
                 mapped_memory_.insert(wrapper);
             }
+            else if (GetMemoryTrackingMode() == CaptureSettings::MemoryTrackingMode::kScanned)
+            {
+                if (size == VK_WHOLE_SIZE)
+                {
+                    assert(offset <= wrapper->allocation_size);
+                    size = wrapper->allocation_size - offset;
+                }
+
+                if (size > 0)
+                {
+                    GFXRECON_CHECK_CONVERSION_DATA_LOSS(size_t, offset);
+                    GFXRECON_CHECK_CONVERSION_DATA_LOSS(size_t, size);
+
+                    util::ScanChecksumTracker* tracker = util::ScanChecksumTracker::Get();
+                    assert(tracker != nullptr);
+
+                    tracker->AddTrackedMemory(wrapper->handle_id,
+                                              (*ppData),
+                                              static_cast<size_t>(offset),
+                                              static_cast<size_t>(size));
+                }
+            }
         }
         else
         {
@@ -2887,6 +2917,36 @@ void VulkanCaptureManager::PreProcess_vkFlushMappedMemoryRanges(VkDevice        
                     if ((current_memory_wrapper != nullptr) && (current_memory_wrapper->mapped_data != nullptr))
                     {
                         manager->ProcessMemoryEntry(
+                            current_memory_wrapper->handle_id,
+                            [this](uint64_t memory_id, void* start_address, size_t offset, size_t size) {
+                                WriteFillMemoryCmd(memory_id, offset, size, start_address);
+                            });
+                    }
+                    else
+                    {
+                        GFXRECON_LOG_WARNING("vkFlushMappedMemoryRanges called for memory that is not mapped");
+                    }
+                }
+            }
+        }
+        else if (GetMemoryTrackingMode() == CaptureSettings::MemoryTrackingMode::kScanned)
+        {
+            const vulkan_wrappers::DeviceMemoryWrapper* current_memory_wrapper = nullptr;
+            util::ScanChecksumTracker*                  tracker = util::ScanChecksumTracker::Get();
+            assert(tracker != nullptr);
+
+            for (uint32_t i = 0; i < memoryRangeCount; ++i)
+            {
+                auto next_memory_wrapper =
+                    vulkan_wrappers::GetWrapper<vulkan_wrappers::DeviceMemoryWrapper>(pMemoryRanges[i].memory);
+
+                if (next_memory_wrapper != current_memory_wrapper)
+                {
+                    current_memory_wrapper = next_memory_wrapper;
+
+                    if ((current_memory_wrapper != nullptr) && (current_memory_wrapper->mapped_data != nullptr))
+                    {
+                        tracker->ProcessMemoryEntry(
                             current_memory_wrapper->handle_id,
                             [this](uint64_t memory_id, void* start_address, size_t offset, size_t size) {
                                 WriteFillMemoryCmd(memory_id, offset, size, start_address);
@@ -2977,6 +3037,18 @@ void VulkanCaptureManager::PreProcess_vkUnmapMemory(VkDevice device, VkDeviceMem
                 mapped_memory_.erase(wrapper);
             }
         }
+        else if (GetMemoryTrackingMode() == CaptureSettings::MemoryTrackingMode::kScanned)
+        {
+            util::ScanChecksumTracker* tracker = util::ScanChecksumTracker::Get();
+            assert(tracker != nullptr);
+
+            tracker->ProcessMemoryEntry(wrapper->handle_id,
+                                        [this](uint64_t memory_id, void* start_address, size_t offset, size_t size) {
+                                            WriteFillMemoryCmd(memory_id, offset, size, start_address);
+                                        });
+
+            tracker->RemoveTrackedMemory(wrapper->handle_id);
+        }
 
         if (IsCaptureModeTrack())
         {
@@ -3034,6 +3106,13 @@ void VulkanCaptureManager::PreProcess_vkFreeMemory(VkDevice                     
             {
                 std::lock_guard<std::mutex> lock(GetMappedMemoryLock());
                 mapped_memory_.erase(wrapper);
+            }
+            else if (GetMemoryTrackingMode() == CaptureSettings::MemoryTrackingMode::kScanned)
+            {
+                util::ScanChecksumTracker* tracker = util::ScanChecksumTracker::Get();
+                assert(tracker != nullptr);
+
+                tracker->RemoveTrackedMemory(wrapper->handle_id);
             }
         }
     }
@@ -3284,6 +3363,15 @@ void VulkanCaptureManager::QueueSubmitWriteFillMemoryCmd()
             // We set offset to 0, because the pointer returned by vkMapMemory already includes the offset.
             WriteFillMemoryCmd(wrapper->handle_id, 0, size, wrapper->mapped_data);
         }
+    }
+    else if (GetMemoryTrackingMode() == CaptureSettings::MemoryTrackingMode::kScanned)
+    {
+        util::ScanChecksumTracker* tracker = util::ScanChecksumTracker::Get();
+        assert(tracker != nullptr);
+
+        tracker->ProcessMemoryEntries([this](uint64_t memory_id, void* start_address, size_t offset, size_t size) {
+            WriteFillMemoryCmd(memory_id, offset, size, start_address);
+        });
     }
 }
 

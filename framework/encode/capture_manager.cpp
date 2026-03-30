@@ -40,6 +40,7 @@
 #include "util/logging.h"
 #include "util/page_guard_manager.h"
 #include "util/platform.h"
+#include "util/scan_checksum_tracker.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -137,6 +138,10 @@ CommonCaptureManager::~CommonCaptureManager()
         memory_tracking_mode_ == CaptureSettings::MemoryTrackingMode::kUserfaultfd)
     {
         util::PageGuardManager::Destroy();
+    }
+    else if (memory_tracking_mode_ == CaptureSettings::MemoryTrackingMode::kScanned)
+    {
+        util::ScanChecksumTracker::Destroy();
     }
 
     util::Log::Release();
@@ -617,6 +622,10 @@ bool CommonCaptureManager::Initialize(format::ApiFamilyId                   api_
                                            trace_settings.page_guard_signal_handler_watcher,
                                            trace_settings.page_guard_signal_handler_watcher_max_restores,
                                            mem_prot_mode);
+        }
+        else if (memory_tracking_mode_ == CaptureSettings::MemoryTrackingMode::kScanned)
+        {
+            util::ScanChecksumTracker::Create();
         }
     }
     else
@@ -1719,6 +1728,10 @@ void CommonCaptureManager::WriteCaptureOptions(std::string& operation_annotation
     else if (memory_tracking_mode_ == CaptureSettings::MemoryTrackingMode::kAssisted)
     {
         buffer += "\n    \"memory-tracking-mode\": \"assisted\",";
+    }
+    else if (memory_tracking_mode_ == CaptureSettings::MemoryTrackingMode::kScanned)
+    {
+        buffer += "\n    \"memory-tracking-mode\": \"scanned\",";
     }
     else
     {

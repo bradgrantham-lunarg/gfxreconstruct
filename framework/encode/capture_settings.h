@@ -174,7 +174,11 @@ class CaptureSettings
         // Similar mechanism as page guard. The mapper memory returned by the driver is replaced by a shadow
         // allocation but in this case the memory is monitored using the userfaultfd mechanism provided by the linux
         // kernel.
-        kUserfaultfd = 3
+        kUserfaultfd = 3,
+        // Use per-page checksums to determine which regions of memory have been modified.  At each sync point
+        // (queue submit, unmap), all pages are scanned and their checksums compared to detect changes.  No shadow
+        // memory or OS page protection is used — the application writes directly to driver-mapped memory.
+        kScanned = 4
     };
 
     enum RuntimeTriggerState

@@ -60,7 +60,7 @@ def usage_message():
         '                                 [--log-level {debug,info,warn,error,fatal}]',
         '                                 [--log-timestamps]',
         '                                 [--log-file <file>]',
-        '                                 [--memory-tracking-mode {page_guard,assisted,unassisted}]',
+        '                                 [--memory-tracking-mode {page_guard,scanned,assisted,unassisted}]',
         '                                 [--capture-layer <capture_layer_path>',
     ]
     if sys.platform == 'win32':
@@ -114,7 +114,7 @@ def create_argument_parser():
                            'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'TAB', 'CTRL']
     COMPRESSION_CHOICES = ['LZ4', 'ZLIB', 'ZSTD', 'NONE']
     LOG_LEVEL_CHOICES = ['debug', 'info', 'warn', 'error', 'fatal']
-    MEMORY_TRACKING_MODE_CHOICES = ['page_guard', 'assisted', 'unassisted']
+    MEMORY_TRACKING_MODE_CHOICES = ['page_guard', 'scanned', 'assisted', 'unassisted']
 
     parser = argparse.ArgumentParser(
         prog=os.path.basename(sys.argv[0]),
@@ -167,6 +167,8 @@ def create_argument_parser():
         help='\n'.join([
             'R|Method used to track changes to memory mapped objects:',
             '  - page_guard: use pageguard to track changes (default)',
+            '  - scanned: use per-page checksums to detect changes',
+            '  - without shadow memory or OS page protection',
             '  - assisted: application will call vkFlushMappedMemoryRanges',
             '  - for memory to be written to the capture file',
             '  - unassisted: all mapped memory will be written to the',

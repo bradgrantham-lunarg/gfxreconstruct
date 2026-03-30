@@ -83,6 +83,10 @@ target_sources(gfxrecon_util
                     ${CMAKE_CURRENT_LIST_DIR}/page_guard_manager.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/page_guard_manager_uffd.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/page_status_tracker.h
+                    ${CMAKE_CURRENT_LIST_DIR}/scan_checksum.h
+                    ${CMAKE_CURRENT_LIST_DIR}/scan_checksum.cpp
+                    ${CMAKE_CURRENT_LIST_DIR}/scan_checksum_tracker.h
+                    ${CMAKE_CURRENT_LIST_DIR}/scan_checksum_tracker.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/platform.h
                     ${CMAKE_CURRENT_LIST_DIR}/settings_loader.h
                     ${CMAKE_CURRENT_LIST_DIR}/settings_loader.cpp

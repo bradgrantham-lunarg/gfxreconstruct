@@ -54,7 +54,7 @@ jobs:
         cmakeVersion: 3.24
     - name: Run build script
       run: |
-        if [ "${{ matrix.config.type }}" == "release" ]
+        if [ "${{ matrix.config.type }}" == "debug" ]
         then
           clang-format-14 --version
           git fetch origin ${{ github.base_ref }} # Fetch target branch to FETCH_HEAD for code style check.

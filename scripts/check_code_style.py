@@ -45,6 +45,7 @@ def check_code_style(file_list, compare_base, style_script=None, style_config_di
     if not style_config_dir:
         # Use the script directory's parent directory as the .clang-format file location
         style_config_dir = os.path.join(os.path.dirname(style_script), os.pardir)
+    print("Checking code style changes against base %s" % str(git_branch, 'utf-8'))
     diff_cmd = ["git", "diff", "-U0", str(git_branch, 'utf-8'), "--"] + file_list
     style_cmd = [sys.executable, style_script,"-p1","-style=file"]
     try:

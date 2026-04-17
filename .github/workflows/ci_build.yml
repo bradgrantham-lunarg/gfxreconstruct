@@ -136,6 +136,15 @@ jobs:
     - name: Set WindowsSDKVersion
       run:
         echo ("WindowsSDKVersion=10.0.26100.0\") >> $env:GITHUB_ENV
+    - name: Install clang-format
+      uses: aminya/setup-cpp@v1
+      with:
+        clang-format: 14.0.0
+    - name: Create clang-format-14 alias
+     shell: pwsh
+     run: |
+       $target = (Get-Command clang-format).Source
+       Copy-Item $target (Join-Path (Split-Path $target) "clang-format-14.exe")
     - name: Clone repository from merge of PR branch and dev branch
       uses: actions/checkout@v4
       with:

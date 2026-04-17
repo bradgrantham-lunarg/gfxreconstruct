@@ -146,14 +146,13 @@ jobs:
         git diff --exit-code
     - name: Run build script
       run: |
-        if [ "${{ matrix.config.type }}" == "release" ]
-        then
+        if ("${{ matrix.config.type }}" -eq "release") {
           python scripts\build.py --skip-check-code-style --config ${{ matrix.config.type }} --parallel 0 --test-apps
-        else
+        } else {
           clang-format-14 --version
           git fetch origin ${{ github.base_ref }} # Fetch target branch to FETCH_HEAD for code style check.
-          python3 scripts/build.py --config ${{ matrix.config.type }} --check-code-style-base FETCH_HEAD --parallel 0 --test-apps
-        fi
+          python scripts\build.py --config ${{ matrix.config.type }} --check-code-style-base FETCH_HEAD --parallel 0 --test-apps
+        }
     - name: Run test app test cases
       id: test_apps
       run: |

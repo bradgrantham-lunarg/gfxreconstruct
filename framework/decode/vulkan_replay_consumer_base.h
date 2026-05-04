@@ -1764,6 +1764,7 @@ class VulkanReplayConsumerBase : public VulkanConsumer
 
     void InitializeResourceAllocator(const VulkanPhysicalDeviceInfo* physical_device_info,
                                      VkDevice                        device,
+                                     const VkDeviceCreateInfo&       device_create_info,
                                      const std::vector<std::string>& enabled_device_extensions,
                                      VulkanResourceAllocator*        allocator);
 

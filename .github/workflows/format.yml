@@ -1,0 +1,49 @@
+# .github/workflows/format.yml
+name: Format
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_branch:
+        description: 'Branch to diff against'
+        default: 'dev'
+        type: string
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Install clang-format-14
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-14
+
+      - name: Apply clang-format to changed hunks
+        run: |
+          BASE="origin/${{ inputs.base_branch }}"
+          git fetch origin "${{ inputs.base_branch }}"
+          clang-format-14 --version
+
+          git diff -U0 "$BASE"...HEAD -- \
+            '*.c' '*.h' '*.cpp' '*.hpp' '*.mm' \
+            ':!framework/generated/' ':!external/' \
+            ':!*generated_*' ':!*.def' | \
+            python3 scripts/clang-format-diff.py -p1 -style=file -i
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit — already formatted."
+          else
+            git commit -m "ci: apply clang-format-14"
+            git push
+          fi

@@ -190,6 +190,11 @@ Some suggestions to help this process:
 
 ## Coding Guidelines
 
+For how GFXR code is written in practice (where a change belongs, recipes for
+common changes, idioms reviewers expect, corner cases, testing, and known
+traps), see [GFXReconstruct Coding Guide](docs/GFXReconstruct%20Coding%20Guide.md).
+It is derived from two years of merged PRs and cites them.
+
 ### GFXR Do's
 
 1. Use `GFXRECON_ASSERT` and not `assert`
